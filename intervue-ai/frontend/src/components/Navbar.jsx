@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Bot, Sparkles, Menu, X, ArrowRight } from 'lucide-react';
 
 export default function Navbar() {
@@ -36,7 +37,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 group">
+          <Link to="/" className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-400 p-[1px] shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-all">
               <div className="w-full h-full bg-[#090d16] rounded-[11px] flex items-center justify-center">
                 <Bot className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
@@ -49,7 +50,7 @@ export default function Navbar() {
                 v1.0
               </span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
@@ -81,18 +82,21 @@ export default function Navbar() {
 
           {/* Action Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-2 cursor-pointer">
+            <Link
+              to="/login"
+              className="text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-2 cursor-pointer"
+            >
               Log In
-            </button>
-            <button
-              onClick={() => scrollToSection('interview-types')}
+            </Link>
+            <Link
+              to="/dashboard"
               className="relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-xl group bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-400 group-hover:from-indigo-500 group-hover:to-cyan-400 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all cursor-pointer"
             >
               <span className="relative px-4 py-2 transition-all ease-in duration-75 bg-[#090d16]/40 rounded-[10px] flex items-center gap-2 font-semibold">
                 Start Interview
                 <ArrowRight className="w-4 h-4 text-cyan-300 group-hover:translate-x-0.5 transition-transform" />
               </span>
-            </button>
+            </Link>
           </div>
 
           {/* Mobile menu toggle */}
@@ -134,15 +138,20 @@ export default function Navbar() {
             Pricing
           </button>
           <div className="pt-4 border-t border-slate-800 flex flex-col gap-2">
-            <button className="w-full text-center py-2 text-sm font-medium text-slate-300 hover:text-white">
+            <Link
+              to="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-center py-2 text-sm font-medium text-slate-300 hover:text-white"
+            >
               Log In
-            </button>
-            <button
-              onClick={() => scrollToSection('interview-types')}
+            </Link>
+            <Link
+              to="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl font-medium text-sm text-center shadow-lg shadow-indigo-500/20"
             >
               Start Interview
-            </button>
+            </Link>
           </div>
         </div>
       )}
