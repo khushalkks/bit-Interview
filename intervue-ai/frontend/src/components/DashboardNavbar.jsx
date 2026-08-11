@@ -35,17 +35,17 @@ export default function DashboardNavbar() {
 
           {/* Center Navigation links */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/dashboard" className="text-xs font-semibold text-white bg-slate-800/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-slate-700/50">
+            <Link to="/dashboard" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
               <LayoutDashboard className="w-3.5 h-3.5 text-indigo-400" />
               <span>Dashboard</span>
             </Link>
+            <Link to="/resume" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Resume</span>
+            </Link>
             <a href="#interviews" className="text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span>Mock Sessions</span>
-            </a>
-            <a href="#analytics" className="text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
               <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
-              <span>Analytics</span>
+              <span>Mock Sessions</span>
             </a>
           </nav>
 

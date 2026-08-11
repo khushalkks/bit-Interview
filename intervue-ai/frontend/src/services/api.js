@@ -7,10 +7,14 @@ export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem('bit_interview_token');
 
   const headers = {
-    'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
+
+  // Only set Content-Type to application/json if body is not FormData
+  if (options.body && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const config = {
     ...options,
@@ -18,6 +22,11 @@ export async function apiFetch(endpoint, options = {}) {
   };
 
   const response = await fetch(`${BASE_URL}${endpoint}`, config);
+  
+  if (response.status === 204) {
+    return null;
+  }
+
   const data = await response.json();
 
   if (!response.ok) {
@@ -45,4 +54,22 @@ export const authAPI = {
 
 export const dashboardAPI = {
   getSummary: () => apiFetch('/dashboard/summary'),
+};
+
+export const resumeAPI = {
+  upload: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch('/resume/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  getMe: () => apiFetch('/resume/me'),
+
+  delete: () =>
+    apiFetch('/resume/me', {
+      method: 'DELETE',
+    }),
 };
