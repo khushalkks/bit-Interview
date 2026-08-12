@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bot, Sparkles, Upload, FileCode2, Play, Award, Clock, ArrowRight, CheckCircle2, TrendingUp, Calendar, AlertCircle, ChevronRight, BarChart2, BookOpen, Cpu, Target, Zap, Shield, Filter, Search } from 'lucide-react';
 import DashboardNavbar from '../components/DashboardNavbar';
+import TrackSelectionModal from '../components/TrackSelectionModal';
+import { SkillRadarChart, ReadinessGrowthChart } from '../components/AnalyticsCharts';
 import { useAuth } from '../hooks/useAuth';
 import { dashboardAPI } from '../services/api';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -22,6 +27,17 @@ export default function DashboardPage() {
       }
     }
     fetchDashboard();
+
+    // Real-time polling interval (every 6 seconds)
+    const interval = setInterval(fetchDashboard, 6000);
+
+    // Refetch when window gains focus
+    window.addEventListener('focus', fetchDashboard);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchDashboard);
+    };
   }, []);
 
   return (
@@ -50,11 +66,17 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto relative z-10 pt-2 xl:pt-0">
-            <button className="flex-1 xl:flex-initial px-6 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-600 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-bold text-sm sm:text-base shadow-2xl shadow-indigo-500/30 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:scale-[1.02]">
+            <button
+              onClick={() => setIsTrackModalOpen(true)}
+              className="flex-1 xl:flex-initial px-6 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-600 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-bold text-sm sm:text-base shadow-2xl shadow-indigo-500/30 flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:scale-[1.02]"
+            >
               <Play className="w-5 h-5 fill-white" />
               <span>Start Adaptive Interview</span>
             </button>
-            <button className="px-5 py-4 rounded-2xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <button
+              onClick={() => navigate('/resume')}
+              className="px-5 py-4 rounded-2xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
               <Upload className="w-4 h-4 text-cyan-400" />
               <span>Update Resume</span>
             </button>
@@ -120,6 +142,12 @@ export default function DashboardPage() {
               <span className="text-xs text-slate-400 font-mono truncate block mt-1">Khushal_Resume.pdf</span>
             </div>
           </div>
+        </div>
+
+        {/* Recharts Analytics & Performance Trajectory Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkillRadarChart />
+          <ReadinessGrowthChart />
         </div>
 
         {/* Widescreen Main 3-Column Layout Grid */}
@@ -293,6 +321,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      <TrackSelectionModal
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
+        defaultRole={user?.target_role || 'Full Stack Engineer'}
+      />
     </div>
   );
 }

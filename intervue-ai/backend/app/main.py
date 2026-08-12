@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, dashboard, resume
+from app.api import auth, dashboard, resume, interview, websocket_interview
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +22,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_PREFIX)
 app.include_router(resume.router, prefix=settings.API_PREFIX)
+app.include_router(interview.router, prefix=settings.API_PREFIX)
+app.include_router(websocket_interview.router)
 
 @app.get("/")
 def read_root():

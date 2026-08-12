@@ -73,3 +73,30 @@ export const resumeAPI = {
       method: 'DELETE',
     }),
 };
+
+export const interviewAPI = {
+  start: (track = 'technical', difficulty = 'Medium', targetRole = 'Full Stack Engineer') =>
+    apiFetch('/interview/start', {
+      method: 'POST',
+      body: JSON.stringify({ track, difficulty, target_role: targetRole }),
+    }),
+
+  getSession: (sessionId) => apiFetch(`/interview/${sessionId}`),
+
+  submitAnswer: (sessionId, answerText, codeSnippet = null, codeLanguage = null) =>
+    apiFetch(`/interview/${sessionId}/answer`, {
+      method: 'POST',
+      body: JSON.stringify({
+        answer_text: answerText,
+        code_snippet: codeSnippet,
+        code_language: codeLanguage,
+      }),
+    }),
+
+  endSession: (sessionId) =>
+    apiFetch(`/interview/${sessionId}/end`, {
+      method: 'POST',
+    }),
+
+  getHistory: () => apiFetch('/interview/history'),
+};
