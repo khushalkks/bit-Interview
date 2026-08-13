@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bot, Bell, User, LogOut, Sparkles, ChevronDown, LayoutDashboard, FileText, BarChart3, Settings } from 'lucide-react';
+import { Bot, Bell, User, LogOut, Sparkles, ChevronDown, LayoutDashboard, FileText, BarChart3, Target, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export default function DashboardNavbar() {
@@ -28,7 +28,7 @@ export default function DashboardNavbar() {
               <span className="text-lg font-bold tracking-tight text-white">Bit-</span>
               <span className="text-lg font-bold tracking-tight text-gradient-accent">Interview</span>
               <span className="ml-2 px-2 py-0.5 text-[9px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full">
-                Candidate Hub
+                AI Platform
               </span>
             </div>
           </Link>
@@ -43,10 +43,14 @@ export default function DashboardNavbar() {
               <FileText className="w-3.5 h-3.5 text-cyan-400" />
               <span>Resume</span>
             </Link>
-            <a href="#interviews" className="text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
-              <span>Mock Sessions</span>
-            </a>
+            <Link to="/jd-analyzer" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-amber-400" />
+              <span>JD Matcher</span>
+            </Link>
+            <Link to="/recruiter" className="text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Recruiter Hub</span>
+            </Link>
           </nav>
 
           {/* Right side Profile & Logout */}

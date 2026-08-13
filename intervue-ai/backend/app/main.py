@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, dashboard, resume, interview, websocket_interview
+from app.api import auth, dashboard, resume, interview, websocket_interview, recruiter
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -23,6 +23,7 @@ app.include_router(auth.router, prefix=settings.API_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_PREFIX)
 app.include_router(resume.router, prefix=settings.API_PREFIX)
 app.include_router(interview.router, prefix=settings.API_PREFIX)
+app.include_router(recruiter.router, prefix=settings.API_PREFIX)
 app.include_router(websocket_interview.router)
 
 @app.get("/")

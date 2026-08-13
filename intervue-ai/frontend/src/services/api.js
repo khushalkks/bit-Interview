@@ -108,3 +108,17 @@ export const interviewAPI = {
 
   getHistory: () => apiFetch('/interview/history'),
 };
+
+export const jdAPI = {
+  analyze: (jdText, targetRole = 'Software Engineer', companyName = 'Target Company') =>
+    apiFetch('/jd/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ jd_text: jdText, target_role: targetRole, company_name: companyName }),
+    }),
+
+  getAnalysis: (id) => apiFetch(`/jd/${id}`),
+};
+
+export const recruiterAPI = {
+  getLeaderboard: () => apiFetch('/recruiter/leaderboard'),
+};

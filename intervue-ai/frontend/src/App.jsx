@@ -9,6 +9,8 @@ import DashboardPage from './pages/DashboardPage';
 import ResumePage from './pages/ResumePage';
 import InterviewPage from './pages/InterviewPage';
 import InterviewReportPage from './pages/InterviewReportPage';
+import JDAnalyzerPage from './pages/JDAnalyzerPage';
+import RecruiterDashboardPage from './pages/RecruiterDashboardPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -49,6 +51,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ResumePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/jd-analyzer"
+            element={
+              <ProtectedRoute>
+                <JDAnalyzerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recruiter"
+            element={
+              <ProtectedRoute>
+                <RecruiterDashboardPage />
               </ProtectedRoute>
             }
           />

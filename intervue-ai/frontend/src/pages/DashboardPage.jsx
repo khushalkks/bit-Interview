@@ -259,7 +259,10 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-400 leading-relaxed">
                     Paste any target software engineering job description to generate role-tailored interview prompts.
                   </p>
-                  <button className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 pt-1 cursor-pointer">
+                  <button
+                    onClick={() => navigate('/jd-analyzer')}
+                    className="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 pt-1 cursor-pointer"
+                  >
                     <span>Analyze Target JD →</span>
                   </button>
                 </div>
