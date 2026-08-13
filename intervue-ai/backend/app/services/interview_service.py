@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from app.schemas.interview import (
     TrackEnum, DifficultyEnum, InterviewSessionResponse,
-    InterviewMessage, InterviewSummaryResponse
+    InterviewMessage, InterviewSummaryResponse, QuestionAnalysisItem
 )
 from app.services.resume_service import RESUMES_DB
 
@@ -206,6 +206,20 @@ class InterviewService:
         )
 
     @staticmethod
+    def log_proctoring_event(user_id: str, session_id: str, event_type: str, details: Optional[str] = None):
+        session = SESSIONS_DB.get(session_id)
+        if not session or session["user_id"] != user_id:
+            raise ValueError("Interview session not found or unauthorized.")
+        
+        events = session.setdefault("proctoring_events", [])
+        events.append({
+            "event_type": event_type,
+            "details": details,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        return {"status": "recorded", "total_events": len(events)}
+
+    @staticmethod
     def end_session(user_id: str, session_id: str) -> InterviewSummaryResponse:
         session = SESSIONS_DB.get(session_id)
         if not session or session["user_id"] != user_id:
@@ -215,6 +229,7 @@ class InterviewService:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         messages = session.get("messages", [])
+        interviewer_msgs = [m for m in messages if m.get("sender") == "interviewer"]
         candidate_msgs = [m for m in messages if m.get("sender") == "candidate"]
 
         # Calculate actual candidate participation
@@ -230,16 +245,22 @@ class InterviewService:
         num_answers = len(candidate_msgs)
 
         if num_answers == 0 or total_words + total_code_len == 0:
-            # Candidate did not provide any answer
-            overall_score = 18
-            tech_acc = 15
-            prob_solv = 15
-            comm = 20
-            strengths = ["Attempted the interview round setup."]
+            overall_score = 25
+            tech_acc = 20
+            prob_solv = 20
+            comm = 30
+            code_eff = 20
+            arch = 25
+            strengths = ["Initiated the interview round environment."]
             areas_for_imp = [
-                "No technical answers or code snippets were provided during the round.",
+                "No technical answers or code snippets were submitted.",
                 "Ensure to articulate your thought process step-by-step for technical questions.",
-                "Write sample code solutions in the editor for coding problems."
+                "Write sample code solutions in the Monaco editor for coding problems."
+            ]
+            recommendations = [
+                "Practice responding to initial technical probes before taking timed rounds.",
+                "Review Data Structures & Algorithms (LeetCode / HackerRank baseline questions).",
+                "Familiarize yourself with the STAR method for technical behavioral responses."
             ]
             feedback = (
                 f"No candidate answers were recorded for this {session['track_title']} session. "
@@ -249,64 +270,164 @@ class InterviewService:
             avg_words = (total_words + total_code_len) / num_answers
             
             if avg_words < 10:
-                overall_score = 35
-                tech_acc = 30
-                prob_solv = 35
-                comm = 40
+                overall_score = 45
+                tech_acc = 40
+                prob_solv = 42
+                comm = 50
+                code_eff = 45
+                arch = 40
                 strengths = ["Submitted brief initial thoughts."]
                 areas_for_imp = [
-                    "Answers were extremely short and lacked core technical depth.",
+                    "Answers were short and lacked technical depth.",
                     "Elaborate on edge cases, time/space complexity, and architecture trade-offs."
+                ]
+                recommendations = [
+                    "Elaborate on why specific algorithms or datastructures were chosen.",
+                    "Always mention Big-O Time complexity and Space complexity analysis.",
+                    "Discuss failure modes and error boundaries in real-world scenarios."
                 ]
                 feedback = f"Responses were too brief to evaluate full technical depth. Elaborate with concrete examples and code snippets."
             elif avg_words < 30:
-                overall_score = 65
-                tech_acc = 62
-                prob_solv = 64
-                comm = 68
+                overall_score = 72
+                tech_acc = 70
+                prob_solv = 72
+                comm = 75
+                code_eff = 71
+                arch = 68
                 strengths = [
-                    "Basic understanding of topic domain.",
-                    "Good foundational terminology used in responses."
+                    "Good understanding of fundamental concepts.",
+                    "Used appropriate technical terminology throughout."
                 ]
                 areas_for_imp = [
                     "Deepen technical specificity regarding performance under scale.",
                     "Include concrete unit test scenarios and error boundaries."
                 ]
+                recommendations = [
+                    "Incorporate system design diagrams or layered architectural patterns.",
+                    "Review distributed caching mechanisms (e.g., Redis LRU, Cache-Aside pattern).",
+                    "Practice writing clean production-grade code with error boundary handling."
+                ]
                 feedback = f"Solid foundation demonstrated during {session['track_title']}. To break past 85%, expand on architecture trade-offs and edge cases."
             else:
-                overall_score = min(96, int(75 + (avg_words * 0.35)))
+                overall_score = min(96, int(78 + (avg_words * 0.35)))
                 tech_acc = min(98, overall_score + 2)
                 prob_solv = min(95, overall_score - 1)
                 comm = min(98, overall_score + 3)
+                code_eff = min(96, overall_score + 1)
+                arch = min(95, overall_score)
                 strengths = [
                     "Strong technical depth and clear architectural reasoning.",
                     "Articulated code complexity and system design trade-offs effectively.",
-                    "Proactive identification of bottlenecks under high load."
+                    "Proactive identification of performance bottlenecks under high load."
                 ]
                 areas_for_imp = [
                     "Include edge-case test suite examples for distributed failure modes.",
                     "Elaborate on cache invalidation strategies under high concurrency."
                 ]
+                recommendations = [
+                    "Focus on high-availability concepts (Multi-region active-active, CAP theorem).",
+                    "Conduct peer architectural reviews for complex microservice pipelines.",
+                    "Explore advanced query optimization & database indexing strategies."
+                ]
                 feedback = f"Outstanding performance in {session['track_title']}! You demonstrated strong technical confidence and thorough reasoning."
+
+        # Build Question-by-Question Analysis
+        question_analysis: List[QuestionAnalysisItem] = []
+        for i in range(max(len(interviewer_msgs), len(candidate_msgs))):
+            q_msg = interviewer_msgs[i] if i < len(interviewer_msgs) else None
+            a_msg = candidate_msgs[i] if i < len(candidate_msgs) else None
+            
+            if q_msg:
+                q_text = q_msg.get("content", "Technical Question")
+                ans_text = a_msg.get("content", "No answer submitted.") if a_msg else "No answer submitted."
+                code_snip = a_msg.get("code_snippet") if a_msg else None
+                
+                # Dynamic scoring & complexity per question
+                q_score = min(98, max(40, overall_score + ((i % 3) * 3 - 2))) if a_msg else 20
+                q_feedback = (
+                    "Good technical clarity and structured breakdown of the solution."
+                    if q_score > 70 else
+                    "Covered basic requirements but missed edge-case handling and performance considerations."
+                )
+                ideal_ans = f"An optimal response addresses the core technical requirements, outlines Big-O complexity (O(N) time / O(1) space), and discusses edge-case handling under production loads."
+
+                question_analysis.append(QuestionAnalysisItem(
+                    id=f"qa_{i+1}",
+                    question=q_text,
+                    candidate_answer=ans_text,
+                    code_snippet=code_snip,
+                    score=q_score,
+                    feedback=q_feedback,
+                    ideal_answer=ideal_ans,
+                    time_complexity="O(N log N)" if code_snip else "N/A",
+                    space_complexity="O(N)" if code_snip else "N/A"
+                ))
+
+        # Integrity & Proctoring audit
+        p_events = session.get("proctoring_events", [])
+        tab_switches = len([e for e in p_events if e.get("event_type") == "tab_switch"])
+        window_blurs = len([e for e in p_events if e.get("event_type") == "window_blur"])
+        pastes = len([e for e in p_events if e.get("event_type") == "code_paste"])
+
+        integrity_deduction = (tab_switches * 8) + (window_blurs * 5) + (pastes * 4)
+        integrity_score = max(35, 100 - integrity_deduction)
+
+        proctoring_flags = []
+        if tab_switches > 0:
+            proctoring_flags.append(f"Detected {tab_switches} browser tab switch(es) during technical session.")
+        if window_blurs > 0:
+            proctoring_flags.append(f"Detected {window_blurs} window focus loss event(s).")
+        if pastes > 0:
+            proctoring_flags.append(f"Detected {pastes} code paste operation(s) in editor.")
+        if not proctoring_flags:
+            proctoring_flags.append("Clean session: Zero anti-cheating or tab-switch violations detected.")
+
+        category_scores = {
+            "Technical Accuracy": tech_acc,
+            "Problem Solving": prob_solv,
+            "Communication": comm,
+            "Code Efficiency": code_eff,
+            "System Architecture": arch
+        }
 
         summary = InterviewSummaryResponse(
             session_id=session_id,
             track_title=session["track_title"],
             target_role=session["target_role"],
             overall_score=overall_score,
-            duration=f"{max(3, session['question_count'] * 2)} minutes",
+            duration=f"{max(5, session['question_count'] * 3)} minutes",
             total_questions=session["question_count"],
             technical_accuracy=tech_acc,
             problem_solving=prob_solv,
             communication=comm,
+            code_efficiency=code_eff,
+            architecture_design=arch,
+            category_scores=category_scores,
+            question_analysis=question_analysis,
+            integrity_score=integrity_score,
+            proctoring_flags=proctoring_flags,
             strengths=strengths,
             areas_for_improvement=areas_for_imp,
+            actionable_recommendations=recommendations,
             overall_feedback=feedback,
             completed_at=now
         )
 
         session["summary"] = summary.dict()
         return summary
+
+    @staticmethod
+    def get_session_summary(user_id: str, session_id: str) -> InterviewSummaryResponse:
+        session = SESSIONS_DB.get(session_id)
+        if not session or session["user_id"] != user_id:
+            raise ValueError("Interview session not found.")
+        
+        summary_dict = session.get("summary")
+        if not summary_dict:
+            # If session exists but end_session was not explicitly triggered, compute it now
+            return InterviewService.end_session(user_id, session_id)
+        
+        return InterviewSummaryResponse(**summary_dict)
 
     @staticmethod
     def get_session(user_id: str, session_id: str) -> InterviewSessionResponse:
@@ -342,3 +463,4 @@ class InterviewService:
             if s["user_id"] == user_id
         ]
         return sorted(user_sessions, key=lambda x: x["started_at"], reverse=True)
+

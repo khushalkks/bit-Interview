@@ -98,5 +98,13 @@ export const interviewAPI = {
       method: 'POST',
     }),
 
+  getReport: (sessionId) => apiFetch(`/interview/${sessionId}/report`),
+
+  logProctoringEvent: (sessionId, eventType, details = null) =>
+    apiFetch(`/interview/${sessionId}/proctoring-event`, {
+      method: 'POST',
+      body: JSON.stringify({ event_type: eventType, details }),
+    }),
+
   getHistory: () => apiFetch('/interview/history'),
 };

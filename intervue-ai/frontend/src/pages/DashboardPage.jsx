@@ -216,7 +216,10 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <button className="text-xs text-indigo-400 hover:text-cyan-300 font-semibold flex items-center gap-1 ml-auto">
+                          <button
+                            onClick={() => navigate(`/interview/${sess.session_id || sess.id}/report`)}
+                            className="text-xs text-indigo-400 hover:text-cyan-300 font-semibold flex items-center gap-1 ml-auto cursor-pointer"
+                          >
                             <span>View Full Report</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>

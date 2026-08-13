@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List
 from app.schemas.interview import (
     StartInterviewRequest, CandidateAnswerRequest,
-    InterviewSessionResponse, InterviewSummaryResponse
+    InterviewSessionResponse, InterviewSummaryResponse, ProctoringEventRequest
 )
 from app.services.interview_service import InterviewService
 from app.api.auth import get_current_user
@@ -48,6 +48,38 @@ def get_interview_session(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+@router.get("/{session_id}/report", response_model=InterviewSummaryResponse)
+def get_interview_report(
+    session_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        user_id = current_user["id"]
+        return InterviewService.get_session_summary(user_id, session_id)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.post("/{session_id}/proctoring-event")
+def record_proctoring_event(
+    session_id: str,
+    payload: ProctoringEventRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        user_id = current_user["id"]
+        return InterviewService.log_proctoring_event(
+            user_id=user_id,
+            session_id=session_id,
+            event_type=payload.event_type,
+            details=payload.details
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 @router.post("/{session_id}/answer", response_model=InterviewSessionResponse)
 def submit_candidate_answer(
     session_id: str,
@@ -82,3 +114,4 @@ def end_interview_session(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+

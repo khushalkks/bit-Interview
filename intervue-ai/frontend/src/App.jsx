@@ -8,6 +8,7 @@ import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import ResumePage from './pages/ResumePage';
 import InterviewPage from './pages/InterviewPage';
+import InterviewReportPage from './pages/InterviewReportPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -56,6 +57,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <InterviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/interview/:sessionId/report"
+            element={
+              <ProtectedRoute>
+                <InterviewReportPage />
               </ProtectedRoute>
             }
           />

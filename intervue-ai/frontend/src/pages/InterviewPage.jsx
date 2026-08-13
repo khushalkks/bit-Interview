@@ -8,6 +8,8 @@ import {
 import { interviewAPI } from '../services/api';
 import DashboardNavbar from '../components/DashboardNavbar';
 import MonacoCodeEditor from '../components/MonacoCodeEditor';
+import VoiceInterviewerControls from '../components/VoiceInterviewerControls';
+import ProctoringWidget from '../components/ProctoringWidget';
 
 export default function InterviewPage() {
   const { sessionId } = useParams();
@@ -138,6 +140,7 @@ export default function InterviewPage() {
     try {
       const scoreData = await interviewAPI.endSession(sessionId);
       setSummary(scoreData);
+      navigate(`/interview/${sessionId}/report`);
     } catch (err) {
       console.error('Failed to end session:', err);
       alert(err.message || 'Failed to finish session.');
@@ -211,7 +214,12 @@ export default function InterviewPage() {
           </div>
 
           {/* Center Status Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* AI Voice Readout Controls */}
+            <VoiceInterviewerControls
+              latestInterviewerMessage={session?.messages?.filter(m => m.sender === 'interviewer').slice(-1)[0]?.content}
+            />
+
             {/* Timer */}
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-mono">
               <Clock className="w-4 h-4 text-cyan-400" />
@@ -528,6 +536,9 @@ export default function InterviewPage() {
           </motion.div>
         </div>
       )}
+
+      {/* Proctoring & Anti-Cheat Widget */}
+      <ProctoringWidget sessionId={sessionId} />
     </div>
   );
 }
