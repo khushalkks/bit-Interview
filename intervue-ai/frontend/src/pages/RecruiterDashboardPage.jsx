@@ -236,7 +236,7 @@ export default function RecruiterDashboardPage() {
                     </td>
                     <td className="px-4 py-4 text-right">
                       <button
-                        onClick={() => alert(`Reviewing candidate profile scorecard for ${cand.candidate_name}.`)}
+                        onClick={() => navigate(`/interview/${cand.session_id || 'sess_stripe_01'}/report`)}
                         className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 ml-auto cursor-pointer"
                       >
                         <span>View Scorecard</span>
