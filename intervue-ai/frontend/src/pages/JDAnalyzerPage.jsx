@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileCode2, Sparkles, ArrowLeft, CheckCircle2, Building2, Briefcase, Zap, Cpu,
-  Target, Rocket, ArrowRight, BookOpen, Layers
+  Target, Rocket, ArrowRight, BookOpen, Layers, ShieldCheck, AlertCircle, Copy,
+  Check, FileText, BarChart2, Lightbulb, Compass
 } from 'lucide-react';
 import { jdAPI, interviewAPI } from '../services/api';
 import DashboardNavbar from '../components/DashboardNavbar';
@@ -37,6 +38,8 @@ export default function JDAnalyzerPage() {
   const [jdText, setJdText] = useState(SAMPLE_JDS[0].jd);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [activeTab, setActiveTab] = useState('gap'); // 'gap' | 'ats' | 'prep'
+  const [copiedIdx, setCopiedIdx] = useState(null);
   const [launchingSession, setLaunchingSession] = useState(false);
 
   const handleAnalyze = async (e) => {
@@ -47,6 +50,7 @@ export default function JDAnalyzerPage() {
     try {
       const res = await jdAPI.analyze(jdText, targetRole, companyName);
       setAnalysis(res);
+      setActiveTab('gap');
     } catch (err) {
       console.error('Failed to analyze JD:', err);
       alert(err.message || 'Failed to analyze Job Description.');
@@ -62,7 +66,7 @@ export default function JDAnalyzerPage() {
       const session = await interviewAPI.start(
         analysis.recommended_track || 'technical',
         'Medium',
-        `${analysis.company_name} - ${analysis.target_role}`
+        `${analysis.company_name} — ${analysis.target_role}`
       );
       navigate(`/interview/${session.session_id}`);
     } catch (err) {
@@ -70,6 +74,14 @@ export default function JDAnalyzerPage() {
       alert(err.message || 'Failed to start customized interview session');
     } finally {
       setLaunchingSession(false);
+    }
+  };
+
+  const handleCopyBullet = (text, idx) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
     }
   };
 
@@ -92,12 +104,12 @@ export default function JDAnalyzerPage() {
             className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
+            <span>Back to Candidate Dashboard</span>
           </Link>
 
           <div className="flex items-center gap-2 text-xs font-mono bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>JD AI Intelligence v2.0</span>
+            <span>ATS Resume & JD Intelligence Engine v2.5</span>
           </div>
         </div>
 
@@ -105,13 +117,13 @@ export default function JDAnalyzerPage() {
         <div className="bg-gradient-to-r from-slate-900 via-[#0e1629] to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
           <div className="max-w-2xl space-y-3 relative z-10">
             <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold flex items-center gap-1.5">
-              <FileCode2 className="w-4 h-4" /> Role Matcher & Custom Track Generator
+              <Target className="w-4 h-4" /> Resume-to-JD Matcher & ATS Optimizer
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-              Target Job Description AI Analyzer
+              Job Description ATS & Skill Gap Analyzer
             </h1>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Paste any target job description below. Our AI engine extracts required tech stacks, evaluates experience expectations, and generates a personalized mock interview round tailored to that exact job posting!
+              Compare your resume against any target tech Job Description. Identify critical skill gaps, generate ATS-optimized resume bullets, and launch a tailored mock interview round!
             </p>
           </div>
         </div>
@@ -141,7 +153,7 @@ export default function JDAnalyzerPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Company Name
+                    Target Company Name
                   </label>
                   <div className="relative">
                     <Building2 className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -159,13 +171,13 @@ export default function JDAnalyzerPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Paste Job Description Requirements
+                  Paste Job Posting Requirements
                 </label>
                 <textarea
                   value={jdText}
                   onChange={(e) => setJdText(e.target.value)}
                   rows={7}
-                  placeholder="Paste the full job posting requirements, responsibilities, and required tech stack here..."
+                  placeholder="Paste full job posting requirements, responsibilities, and required tech stack here..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-100 outline-none focus:border-cyan-500/60 font-mono leading-relaxed resize-none"
                   required
                 />
@@ -174,17 +186,17 @@ export default function JDAnalyzerPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold rounded-xl text-sm shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-extrabold rounded-xl text-sm shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <Sparkles className="w-4 h-4 animate-spin" />
-                    <span>Analyzing Job Description...</span>
+                    <span>Performing Resume vs. JD ATS Analysis...</span>
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4" />
-                    <span>Analyze JD & Generate Interview Track</span>
+                    <span>Run ATS Gap Analysis & Interview Prep</span>
                   </>
                 )}
               </button>
@@ -196,10 +208,10 @@ export default function JDAnalyzerPage() {
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                 <Target className="w-4 h-4 text-cyan-400" />
-                <span>Preset Sample Job Postings</span>
+                <span>Preset Company Job Descriptions</span>
               </h3>
               <p className="text-xs text-slate-400">
-                Click any preset to test the AI analyzer on top engineering roles:
+                Click any preset to test the ATS Gap Analysis engine on top companies:
               </p>
 
               <div className="space-y-2.5">
@@ -222,12 +234,12 @@ export default function JDAnalyzerPage() {
             </div>
 
             <div className="pt-4 border-t border-slate-800/80 text-[11px] text-slate-400">
-              <strong className="text-slate-200">Pro Tip:</strong> Matching your resume against specific target JDs increases mock interview efficacy by 40%.
+              <strong className="text-slate-200">Pro Tip:</strong> Resolving critical skill gaps before real interview calls increases candidate offer rates by 3.2x.
             </div>
           </div>
         </div>
 
-        {/* AI Analysis Output Section */}
+        {/* AI Analysis Command Center */}
         <AnimatePresence>
           {analysis && (
             <motion.div
@@ -236,88 +248,253 @@ export default function JDAnalyzerPage() {
               exit={{ opacity: 0, y: 20 }}
               className="space-y-6 bg-gradient-to-br from-[#0f172a] to-[#0b1329] border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl"
             >
-              {/* Analysis Header Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-6">
+              {/* Analysis Hero Header */}
+              <div className="flex flex-wrap items-center justify-between gap-6 border-b border-slate-800 pb-6">
                 <div>
-                  <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
-                    Analysis Completed
-                  </span>
-                  <h2 className="text-xl font-bold text-white mt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest font-semibold">
+                      Target Analysis Complete
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      {analysis.experience_level}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mt-1">
                     {analysis.company_name} — {analysis.target_role}
                   </h2>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                    {analysis.company_culture_notes}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Match Baseline</span>
-                    <span className="text-lg font-mono font-extrabold text-cyan-400">{analysis.match_score}%</span>
-                  </div>
-
-                  <div className="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl text-center">
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Detected Level</span>
-                    <span className="text-xs font-mono font-bold text-emerald-400">{analysis.experience_level}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Extracted Skills & Focus Areas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3 bg-slate-950/60 p-5 rounded-2xl border border-slate-800">
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-cyan-400" />
-                    <span>Extracted Tech Stack & Skills</span>
-                  </h3>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {analysis.extracted_skills.map((skill, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700/80 text-xs font-mono text-cyan-300"
-                      >
-                        {skill}
+                <div className="flex items-center gap-4">
+                  {/* ATS Match Gauge */}
+                  <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl flex items-center gap-3">
+                    <div className="relative flex items-center justify-center w-14 h-14">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle cx="28" cy="28" r="22" stroke="currentColor" strokeWidth="4" className="text-slate-800" fill="transparent" />
+                        <circle
+                          cx="28"
+                          cy="28"
+                          r="22"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          strokeDasharray={138}
+                          strokeDashoffset={138 - (138 * analysis.resume_match_score) / 100}
+                          strokeLinecap="round"
+                          className="text-cyan-400 transition-all duration-1000"
+                          fill="transparent"
+                        />
+                      </svg>
+                      <span className="absolute font-mono text-xs font-extrabold text-white">
+                        {analysis.resume_match_score}%
                       </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3 bg-slate-950/60 p-5 rounded-2xl border border-slate-800">
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-400" />
-                    <span>Key Evaluation Focus Areas</span>
-                  </h3>
-                  <ul className="space-y-2 text-xs text-slate-300 pt-1">
-                    {analysis.key_focus_areas.map((area, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span>{area}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Generated Custom Questions */}
-              <div className="space-y-3 bg-slate-950/60 p-5 rounded-2xl border border-slate-800">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-indigo-400" />
-                  <span>Custom AI Interview Questions Generated for this JD</span>
-                </h3>
-                <div className="space-y-2 pt-1">
-                  {analysis.suggested_interview_questions.map((q, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 flex items-start gap-3">
-                      <span className="w-5 h-5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold flex items-center justify-center shrink-0">
-                        {idx + 1}
-                      </span>
-                      <span>{q}</span>
                     </div>
-                  ))}
+                    <div>
+                      <span className="text-[11px] text-slate-400 block font-mono">ATS Resume Match</span>
+                      <span className="text-xs font-bold text-cyan-400">
+                        {analysis.resume_match_score >= 80 ? 'Strong ATS Match' : 'Gap Action Required'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* 3-Tab Command Center Navigation */}
+              <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+                <button
+                  onClick={() => setActiveTab('gap')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    activeTab === 'gap'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Resume vs. JD Gap Analysis</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('ats')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    activeTab === 'ats'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>ATS Resume Optimizer</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('prep')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    activeTab === 'prep'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Tailored Interview Prep & Questions</span>
+                </button>
+              </div>
+
+              {/* TAB 1: RESUME vs. JD GAP ANALYSIS */}
+              {activeTab === 'gap' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Matching Skills */}
+                    <div className="bg-slate-950/80 border border-emerald-500/20 rounded-2xl p-5 space-y-3">
+                      <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Matching Skills (Already in Your Resume)</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400">
+                        Skills detected in both your resume and this target Job Description:
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {analysis.matching_skills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-300"
+                          >
+                            ✓ {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Critical Skill Gaps */}
+                    <div className="bg-slate-950/80 border border-rose-500/20 rounded-2xl p-5 space-y-3">
+                      <h3 className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>Critical Skill Gaps (Required by JD)</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400">
+                        Key requirements in this JD that are missing from your profile:
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {analysis.missing_skills.length > 0 ? (
+                          analysis.missing_skills.map((skill, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs font-mono text-rose-300"
+                            >
+                              ! {skill}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs font-mono text-emerald-400">
+                            Zero skill gaps detected! Your resume covers 100% of required tech.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Focus Areas */}
+                  <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-cyan-400" />
+                      <span>Role Alignment Strategy</span>
+                    </h3>
+                    <div className="space-y-2 text-xs text-slate-300">
+                      {analysis.key_focus_areas.map((area, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-2.5 bg-slate-900 rounded-xl border border-slate-800/80">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1.5" />
+                          <span>{area}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: ATS RESUME OPTIMIZER */}
+              {activeTab === 'ats' && (
+                <div className="space-y-6">
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-cyan-400" />
+                        <span>ATS Resume Bullet Point Recommendations</span>
+                      </h3>
+                      <span className="text-[10px] font-mono text-slate-400">Copy & Add to Your Resume</span>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Copy these ATS-optimized accomplishment bullets into your resume to pass applicant tracking filters for {analysis.company_name}:
+                    </p>
+
+                    <div className="space-y-3">
+                      {analysis.ats_recommendations.map((rec, idx) => (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4 group hover:border-cyan-500/40 transition"
+                        >
+                          <div className="text-xs font-mono text-slate-200 leading-relaxed">
+                            "{rec}"
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyBullet(rec, idx)}
+                            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition shrink-0 cursor-pointer"
+                            title="Copy Bullet Point"
+                          >
+                            {copiedIdx === idx ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: TAILORED INTERVIEW PREP & QUESTIONS */}
+              {activeTab === 'prep' && (
+                <div className="space-y-6">
+                  {/* 7-Day Roadmap */}
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-cyan-400" />
+                      <span>7-Day Technical Study Roadmap</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {analysis.prep_study_plan.map((step, idx) => (
+                        <div key={idx} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800/80 text-xs text-slate-300 flex items-start gap-3">
+                          <span className="w-5 h-5 rounded-md bg-cyan-500/10 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Company Tailored Questions */}
+                  <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-indigo-400" />
+                      <span>Company Tailored Interview Questions Generated for this JD</span>
+                    </h3>
+                    <div className="space-y-3">
+                      {analysis.suggested_interview_questions.map((q, idx) => (
+                        <div key={idx} className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 flex items-start gap-3">
+                          <span className="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                            Q{idx + 1}
+                          </span>
+                          <span className="leading-relaxed">{q}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Launch CTA */}
               <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-800/80">
                 <div>
-                  <h4 className="text-sm font-bold text-white">Ready for your tailored mock interview?</h4>
-                  <p className="text-xs text-slate-400">Launch an adaptive round configured specifically for this {analysis.company_name} position.</p>
+                  <h4 className="text-sm font-bold text-white">Ready to test your readiness in real time?</h4>
+                  <p className="text-xs text-slate-400">Launch an adaptive mock round combining your resume skills and this target JD requirements.</p>
                 </div>
 
                 <button
@@ -334,7 +511,7 @@ export default function JDAnalyzerPage() {
                   ) : (
                     <>
                       <Rocket className="w-4 h-4" />
-                      <span>Launch JD Interview Track</span>
+                      <span>Launch Dual-Context JD Interview Track</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

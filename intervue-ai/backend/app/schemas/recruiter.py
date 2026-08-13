@@ -11,8 +11,14 @@ class JDAnalysisResponse(BaseModel):
     target_role: str
     company_name: str
     match_score: int
+    resume_match_score: int = 78
     experience_level: str
     extracted_skills: List[str] = Field(default_factory=list)
+    matching_skills: List[str] = Field(default_factory=list)
+    missing_skills: List[str] = Field(default_factory=list)
+    ats_recommendations: List[str] = Field(default_factory=list)
+    prep_study_plan: List[str] = Field(default_factory=list)
+    company_culture_notes: str = ""
     key_focus_areas: List[str] = Field(default_factory=list)
     suggested_interview_questions: List[str] = Field(default_factory=list)
     recommended_track: str

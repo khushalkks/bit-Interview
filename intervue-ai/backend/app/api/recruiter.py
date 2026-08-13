@@ -18,7 +18,8 @@ def analyze_job_description(
         analysis = JDService.analyze_jd(
             jd_text=payload.jd_text,
             target_role=payload.target_role or "Software Engineer",
-            company_name=payload.company_name or "Target Company"
+            company_name=payload.company_name or "Target Company",
+            user_id=current_user.get("id")
         )
         return analysis
     except HTTPException as he:
