@@ -1,7 +1,7 @@
 import uuid
 import re
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from app.schemas.recruiter import JDAnalysisResponse
 
 # In-memory store for analyzed Job Descriptions
