@@ -12,6 +12,10 @@ class LangGraphInterviewState:
         self.step_index = 0
         self.messages: List[dict] = []
         self.evaluations: List[dict] = []
+        self.topics_covered: List[str] = []
+        self.weak_topics: List[str] = []
+        self.strong_topics: List[str] = []
+        self.interruption_count: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -21,13 +25,24 @@ class LangGraphInterviewState:
             "current_difficulty": self.current_difficulty,
             "step_index": self.step_index,
             "messages": self.messages,
-            "evaluations": self.evaluations
+            "evaluations": self.evaluations,
+            "topics_covered": self.topics_covered,
+            "weak_topics": self.weak_topics,
+            "strong_topics": self.strong_topics,
+            "interruption_count": self.interruption_count
         }
 
 class LangGraphAdaptiveAgent:
     """
     Agentic Workflow Graph implementing LangGraph-style state machine transitions
-    Nodes: [QuestionGenerator -> CandidateResponse -> Evaluator -> DifficultyRouter -> ScorecardSynthesizer]
+    Nodes:
+      1. QuestionGeneratorNode
+      2. CandidateResponseNode
+      3. InterruptionCheckNode (Silence/Ramble/Vague Interruption Loop)
+      4. EvaluatorNode (Technical Accuracy & Complexity Scoring)
+      5. DecisionEngineNode (Routing Signals: CONTINUE | FOLLOW_UP | ADJUST_DIFFICULTY | INTERRUPT)
+      6. DifficultyRouterNode (Easy -> Medium -> Hard -> Advanced)
+      7. ScorecardSynthesizerNode
     """
 
     @staticmethod
@@ -46,9 +61,9 @@ class LangGraphAdaptiveAgent:
                 f"Database internals: How do index structures (B-Trees vs Hash Indexes) optimize lookup performance, and what write overhead occurs during high INSERT throughput?"
             ],
             "coding": [
-                "Coding Sandbox Challenge: Given an array of integers `nums` and a target value `target`, return the indices of two numbers such that they add up to target. Provide an optimal O(N) solution with time and space complexity analysis.",
-                "Coding Challenge: Given a string `s`, find the length of the longest substring without repeating characters. Implement your algorithm in the code editor below.",
-                "Coding Challenge: Design a function to validate if a string containing parentheses `'()[]{}'` is balanced using an efficient Stack data structure."
+                "Coding Sandbox Challenge: Implement an LRU Cache data structure supporting get(key) and put(key, value) in O(1) time complexity. Write your code solution in the Monaco editor.",
+                "Coding Challenge: Given a string s, find the length of the longest substring without repeating characters. Implement your algorithm in the Monaco editor.",
+                "Coding Challenge: Design a function to validate if a string containing parentheses '()[]{}' is balanced using an efficient Stack data structure."
             ],
             "system_design": [
                 f"System Architecture for {role}: Design a scalable Rate Limiting middleware (e.g. 100 requests/minute per user) capable of processing 50,000 requests/second across distributed API gateways.",
@@ -80,8 +95,28 @@ class LangGraphAdaptiveAgent:
         return question_msg
 
     @staticmethod
+    def execute_interruption_check_node(answer_text: str, duration_seconds: int = 0) -> Optional[dict]:
+        """Node 3: Interruption Check Node for Silence, Rambling, or Vague Answers"""
+        words = answer_text.strip().split()
+        word_count = len(words)
+
+        if word_count == 0 or duration_seconds > 20:
+            return {
+                "type": "INTERRUPT_SILENCE",
+                "interviewer_prompt": "Let me interrupt for a moment — would you like to walk me through your current thinking or assumptions out loud?"
+            }
+        
+        if word_count > 180:
+            return {
+                "type": "INTERRUPT_RAMBLE",
+                "interviewer_prompt": "Let's pause there for a second to keep our time focused. What is the core architectural trade-off of your proposed solution?"
+            }
+
+        return None
+
+    @staticmethod
     def execute_evaluator_node(state: LangGraphInterviewState, answer_text: str, code_snippet: Optional[str] = None) -> dict:
-        """Node 2: Evaluator Node"""
+        """Node 4: Evaluator Node"""
         word_count = len(answer_text.split()) + (len((code_snippet or "").split()) if code_snippet else 0)
         has_code = bool(code_snippet and len(code_snippet.strip()) > 15)
 
@@ -90,17 +125,17 @@ class LangGraphAdaptiveAgent:
             accuracy_score = 15
             critique = "No answer provided. Candidate left the question unattempted."
             route_decision = "DECREASE_DIFFICULTY"
-        elif word_count < 10:
-            accuracy_score = 35
+        elif word_count < 12:
+            accuracy_score = 38
             critique = "Response was extremely brief and lacked core technical reasoning."
             route_decision = "DECREASE_DIFFICULTY"
-        elif word_count < 30:
-            accuracy_score = 65
-            critique = "Solid initial points, but needs more technical depth and edge-case analysis."
+        elif word_count < 35:
+            accuracy_score = 68
+            critique = "Solid initial points, but needs deeper technical edge-case breakdown."
             route_decision = "MAINTAIN_DIFFICULTY"
         else:
             accuracy_score = min(98, 75 + (word_count // 5) + (15 if has_code else 0))
-            critique = "Outstanding technical depth! Clearly articulated core principles and edge cases."
+            critique = "Outstanding technical depth! Clearly articulated core principles and trade-offs."
             route_decision = "INCREASE_DIFFICULTY"
 
         eval_result = {
@@ -116,7 +151,7 @@ class LangGraphAdaptiveAgent:
 
     @staticmethod
     def execute_router_node(state: LangGraphInterviewState, route_decision: str) -> str:
-        """Node 3: Dynamic Difficulty Router Node"""
+        """Node 6: Dynamic Difficulty Router Node"""
         ladder = ["Easy", "Medium", "Hard", "Advanced"]
         curr = state.current_difficulty
         curr_idx = ladder.index(curr) if curr in ladder else 1
@@ -133,7 +168,7 @@ class LangGraphAdaptiveAgent:
 
     @staticmethod
     def execute_scorecard_node(state: LangGraphInterviewState) -> dict:
-        """Node 4: Scorecard Synthesizer Node"""
+        """Node 7: Scorecard Synthesizer Node"""
         evals = state.evaluations
         if not evals:
             avg_acc = 18
@@ -148,7 +183,7 @@ class LangGraphAdaptiveAgent:
                 feedback = "Responses lacked technical details. Work on elaborating concepts and code."
             else:
                 strengths = [
-                    "Strong technical confidence in architecture discussions.",
+                    "Strong technical confidence in system architecture discussions.",
                     "Clear verbal articulation of algorithmic time & space complexity.",
                     "Effective application of modular clean code patterns."
                 ]

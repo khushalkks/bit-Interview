@@ -6,6 +6,7 @@ from app.schemas.interview import (
     InterviewMessage, InterviewSummaryResponse, QuestionAnalysisItem
 )
 from app.services.resume_service import RESUMES_DB
+from app.ai.langgraph_agent import LangGraphInterviewState, LangGraphAdaptiveAgent
 
 # In-memory store for active & completed interview sessions
 SESSIONS_DB: Dict[str, dict] = {}
@@ -153,35 +154,41 @@ class InterviewService:
         )
         session["messages"].append(candidate_msg.dict())
 
-        # 2. Adaptive Difficulty Logic
+        # 2. LangGraph Agent Workflow execution
         current_diff = session["current_difficulty"]
-        word_count = len(answer_text.split()) + (len((code_snippet or "").split()) if code_snippet else 0)
 
-        # Strict technical evaluation heuristic
-        if word_count > 60 or (code_snippet and len(code_snippet) > 30):
-            eval_hint = "Strong technical depth and detailed reasoning."
-            curr_idx = next((i for i, d in enumerate(DIFFICULTY_LADDER) if d.value == current_diff), 1)
-            next_idx = min(curr_idx + 1, len(DIFFICULTY_LADDER) - 1)
-            next_diff = DIFFICULTY_LADDER[next_idx]
-        elif word_count >= 20:
-            eval_hint = "Good foundational answer. Pushing for technical edge cases."
-            next_diff = DifficultyEnum(current_diff)
-        elif word_count >= 5:
-            eval_hint = "Very brief answer with limited technical details. Asking for fundamental elaboration."
-            curr_idx = next((i for i, d in enumerate(DIFFICULTY_LADDER) if d.value == current_diff), 1)
-            next_idx = max(curr_idx - 1, 0)
-            next_diff = DIFFICULTY_LADDER[next_idx]
-        else:
-            eval_hint = "No substantial response provided. Dropping difficulty to Easy level."
-            next_diff = DifficultyEnum.EASY
+        # Interruption check node (Silence / Ramble / Vague responses)
+        interruption = LangGraphAdaptiveAgent.execute_interruption_check_node(answer_text)
+        
+        # Build LangGraph State
+        state = LangGraphInterviewState(
+            session_id=session_id,
+            track=session["track"],
+            target_role=session["target_role"],
+            initial_difficulty=current_diff
+        )
+        state.step_index = session["question_count"]
+
+        # Evaluator Node execution
+        eval_result = LangGraphAdaptiveAgent.execute_evaluator_node(state, answer_text, code_snippet)
+        eval_hint = eval_result["critique"]
+
+        # Router Node execution (Difficulty adjustment)
+        next_diff_str = LangGraphAdaptiveAgent.execute_router_node(state, eval_result["route_decision"])
+        try:
+            next_diff = DifficultyEnum(next_diff_str)
+        except ValueError:
+            next_diff = DifficultyEnum.MEDIUM
 
         session["current_difficulty"] = next_diff.value
         session["question_count"] += 1
 
-        # 3. Generate Follow-up AI Question
-        track_enum = TrackEnum(session["track"])
-        follow_ups = ADAPTIVE_FOLLOW_UPS.get(next_diff, ADAPTIVE_FOLLOW_UPS[DifficultyEnum.MEDIUM])
-        follow_up_text = follow_ups[session["question_count"] % len(follow_ups)]
+        # 3. Generate Next Interviewer Response
+        if interruption:
+            follow_up_text = f"{interruption['interviewer_prompt']}\n\nCan you summarize your core approach in 2-3 concise bullet points?"
+        else:
+            follow_ups = ADAPTIVE_FOLLOW_UPS.get(next_diff, ADAPTIVE_FOLLOW_UPS[DifficultyEnum.MEDIUM])
+            follow_up_text = follow_ups[session["question_count"] % len(follow_ups)]
 
         ai_msg = InterviewMessage(
             id=f"msg_{uuid.uuid4().hex[:8]}",
