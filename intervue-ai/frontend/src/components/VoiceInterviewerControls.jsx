@@ -50,7 +50,7 @@ export default function VoiceInterviewerControls({ latestInterviewerMessage }) {
   };
 
   return (
-    <div className="flex items-center gap-3 bg-[#0f172a]/90 backdrop-blur border border-slate-800/80 px-3 py-1.5 rounded-full text-xs text-slate-300 shadow-md">
+    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-3.5 py-1.5 rounded-full text-xs text-slate-700 shadow-xs font-sans">
       {/* Speaking Indicator Soundwave */}
       <div className="flex items-center gap-1.5">
         {isSpeaking ? (
@@ -58,28 +58,28 @@ export default function VoiceInterviewerControls({ latestInterviewerMessage }) {
             <motion.span
               animate={{ height: ['40%', '100%', '30%'] }}
               transition={{ repeat: Infinity, duration: 0.6 }}
-              className="w-1 bg-cyan-400 rounded-full"
+              className="w-1 bg-indigo-600 rounded-full"
             />
             <motion.span
               animate={{ height: ['80%', '20%', '90%'] }}
               transition={{ repeat: Infinity, duration: 0.5, delay: 0.1 }}
-              className="w-1 bg-cyan-400 rounded-full"
+              className="w-1 bg-indigo-600 rounded-full"
             />
             <motion.span
               animate={{ height: ['30%', '90%', '40%'] }}
               transition={{ repeat: Infinity, duration: 0.7, delay: 0.2 }}
-              className="w-1 bg-cyan-400 rounded-full"
+              className="w-1 bg-indigo-600 rounded-full"
             />
           </div>
         ) : (
-          <Radio className="w-3.5 h-3.5 text-slate-500" />
+          <Radio className="w-3.5 h-3.5 text-slate-400" />
         )}
-        <span className="font-mono text-[11px] text-slate-400">
+        <span className="font-mono text-[11px] text-slate-500 font-medium">
           {isSpeaking ? 'AI Speaking...' : 'AI Voice Ready'}
         </span>
       </div>
 
-      <div className="h-3 w-[1px] bg-slate-800" />
+      <div className="h-3 w-[1px] bg-slate-200" />
 
       {/* Auto-read Toggle */}
       <button
@@ -88,14 +88,14 @@ export default function VoiceInterviewerControls({ latestInterviewerMessage }) {
           if (autoRead && isSpeaking) synthRef.current?.cancel();
           setAutoRead(!autoRead);
         }}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-colors ${
+        className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer ${
           autoRead
-            ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-            : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+            : 'bg-slate-100 text-slate-500 hover:text-slate-900'
         }`}
         title="Toggle automatic AI voice narration"
       >
-        {autoRead ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+        {autoRead ? <Volume2 className="w-3 h-3 text-indigo-600" /> : <VolumeX className="w-3 h-3 text-slate-400" />}
         <span>{autoRead ? 'Auto-Voice ON' : 'Voice Muted'}</span>
       </button>
 
@@ -103,17 +103,17 @@ export default function VoiceInterviewerControls({ latestInterviewerMessage }) {
       <button
         type="button"
         onClick={toggleSpeech}
-        className="p-1 rounded-full text-slate-400 hover:text-cyan-400 hover:bg-slate-800 transition"
+        className="p-1 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition cursor-pointer"
         title={isSpeaking ? 'Stop voice readout' : 'Replay AI question'}
       >
-        {isSpeaking ? <Square className="w-3 h-3 fill-slate-400" /> : <Play className="w-3 h-3 fill-slate-400" />}
+        {isSpeaking ? <Square className="w-3 h-3 fill-slate-500" /> : <Play className="w-3 h-3 fill-slate-500" />}
       </button>
 
       {/* Speech Speed selector */}
       <select
         value={speechRate}
         onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-        className="bg-slate-900 border border-slate-800 text-[11px] text-slate-400 rounded px-1 py-0.5 focus:outline-none focus:border-cyan-500/50"
+        className="bg-white border border-slate-200 text-[11px] text-slate-600 rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500 font-mono font-medium"
       >
         <option value={0.85}>0.85x</option>
         <option value={1.0}>1.0x</option>

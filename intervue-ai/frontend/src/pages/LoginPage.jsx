@@ -45,17 +45,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] bg-grid-pattern text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0b0907] bg-grid-pattern text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-amber-600/15 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-blue-600 to-cyan-400 p-[1px] shadow-xl shadow-indigo-500/20">
-              <div className="w-full h-full bg-[#090d16] rounded-[15px] flex items-center justify-center">
-                <Bot className="w-6 h-6 text-indigo-400 group-hover:scale-110 transition-transform" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 p-[1px] shadow-xl shadow-amber-500/20">
+              <div className="w-full h-full bg-[#0b0907] rounded-[15px] flex items-center justify-center">
+                <Bot className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
               </div>
             </div>
             <div className="flex items-center">
@@ -76,7 +76,7 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-2xl backdrop-blur-xl space-y-6"
+          className="p-6 sm:p-8 rounded-2xl bg-[#14100c]/90 border border-amber-900/80 shadow-2xl backdrop-blur-xl space-y-6"
         >
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-start gap-2.5">
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full bg-[#080c16] border border-slate-800 focus:border-indigo-500/80 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-colors"
+                  className="w-full bg-amber-950/80 border border-amber-900/80 focus:border-amber-500/80 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -110,7 +110,7 @@ export default function LoginPage() {
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
                   Password
                 </label>
-                <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                <a href="#" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
                   Forgot password?
                 </a>
               </div>
@@ -122,7 +122,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[#080c16] border border-slate-800 focus:border-indigo-500/80 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-colors"
+                  className="w-full bg-amber-950/80 border border-amber-900/80 focus:border-amber-500/80 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition-colors"
                 />
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>Signing in...</span>
@@ -152,20 +152,20 @@ export default function LoginPage() {
           </form>
 
           {/* Quick Demo Fill Button */}
-          <div className="pt-2 border-t border-slate-800">
+          <div className="pt-2 border-t border-amber-900/60">
             <button
               type="button"
               onClick={handleDemoFill}
-              className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-indigo-300 border border-indigo-500/20 font-medium text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-500/20 font-medium text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <Sparkles className="w-3.5 h-3.5 text-orange-400" />
               <span>Try Instant Demo Account</span>
             </button>
           </div>
 
           <p className="text-center text-xs text-slate-400 pt-2">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors">
+            <Link to="/signup" className="text-amber-400 font-semibold hover:text-amber-300 transition-colors">
               Create an account
             </Link>
           </p>

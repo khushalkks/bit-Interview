@@ -9,36 +9,36 @@ export default function HowItWorks() {
       title: "Upload Resume",
       description: "Upload your resume or pasted experience bullet points. The AI extracts your skills and target role level.",
       icon: Upload,
-      color: "from-blue-500 to-indigo-600"
+      color: "from-amber-400 to-orange-500"
     },
     {
       number: "02",
       title: "Choose Your Interview",
       description: "Select target domain (Frontend, Backend, System Design, HR) and set interview duration and difficulty.",
       icon: Sliders,
-      color: "from-indigo-600 to-purple-600"
+      color: "from-amber-500 to-yellow-400"
     },
     {
       number: "03",
       title: "Face the AI Interviewer",
       description: "Engage in real-time voice & coding interaction. The AI adapts live, probing your design and code choices.",
       icon: Bot,
-      color: "from-purple-600 to-cyan-500"
+      color: "from-orange-500 to-amber-400"
     },
     {
       number: "04",
       title: "Get Performance Report",
       description: "Receive a comprehensive scorecard breaking down technical depth, speech clarity, and actionable tips.",
       icon: FileText,
-      color: "from-cyan-500 to-emerald-500"
+      color: "from-amber-400 to-amber-600"
     }
   ];
 
   return (
-    <section id="how-it-works" className="py-24 bg-[#070b13] border-t border-slate-800/60 relative overflow-hidden">
+    <section id="how-it-works" className="py-24 bg-[#0b0907] border-t border-amber-900/40 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-20">
-          <span className="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
+          <span className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
             Simple 4-Step Process
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -52,7 +52,7 @@ export default function HowItWorks() {
         {/* Timeline Container */}
         <div className="relative">
           {/* Connecting line behind steps for desktop */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/40 to-emerald-500/20 -translate-y-6 z-0" />
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/20 via-orange-500/40 to-amber-500/20 -translate-y-6 z-0" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
             {steps.map((step, idx) => {
@@ -69,16 +69,16 @@ export default function HowItWorks() {
                   {/* Step Icon Badge */}
                   <div className="relative mb-6">
                     <div className={`w-20 h-20 rounded-2xl bg-gradient-to-tr ${step.color} p-[2px] shadow-xl group-hover:scale-105 transition-transform duration-300`}>
-                      <div className="w-full h-full bg-[#090d16] rounded-[14px] flex items-center justify-center relative">
-                        <Icon className="w-8 h-8 text-white group-hover:text-cyan-300 transition-colors" />
-                        <span className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-900 border border-indigo-500/40 flex items-center justify-center font-mono text-xs font-bold text-indigo-300 shadow-md">
+                      <div className="w-full h-full bg-[#14100c] rounded-[14px] flex items-center justify-center relative">
+                        <Icon className="w-8 h-8 text-amber-300 group-hover:text-amber-200 transition-colors" />
+                        <span className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-amber-950 border border-amber-500/40 flex items-center justify-center font-mono text-xs font-bold text-amber-300 shadow-md">
                           {step.number}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors">
+                  <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
                     {step.title}
                   </h3>
 

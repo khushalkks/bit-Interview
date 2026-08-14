@@ -43,10 +43,10 @@ export default function InterviewTypes() {
   ];
 
   return (
-    <section id="interview-types" className="py-24 bg-[#090d16] relative">
+    <section id="interview-types" className="py-24 bg-[#0b0907] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span className="text-xs font-mono font-bold tracking-widest text-indigo-400 uppercase bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full">
+          <span className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
             Tailored Practice Domains
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -67,14 +67,14 @@ export default function InterviewTypes() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.08 }}
-                className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900/90 transition-all duration-300 group flex flex-col justify-between"
+                className="p-6 rounded-2xl bg-amber-950/20 border border-amber-900/40 hover:border-amber-500/40 hover:bg-amber-950/40 transition-all duration-300 group flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all">
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
+                    <h3 className="text-lg font-bold text-white group-hover:text-amber-300 transition-colors">
                       {type.title}
                     </h3>
                   </div>
@@ -85,18 +85,18 @@ export default function InterviewTypes() {
                 </div>
 
                 <div>
-                  <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-800/60 mb-4">
+                  <div className="flex flex-wrap gap-1.5 pt-3 border-t border-amber-900/40 mb-4">
                     {type.tags.map((tag, tIdx) => (
                       <span
                         key={tIdx}
-                        className="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/40"
+                        className="text-[11px] font-mono text-slate-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <button className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-slate-200 hover:text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                  <button className="w-full py-2.5 rounded-xl bg-amber-950/60 hover:bg-amber-500 text-slate-200 hover:text-slate-950 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer border border-amber-900/40">
                     <span>Start Practice</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>

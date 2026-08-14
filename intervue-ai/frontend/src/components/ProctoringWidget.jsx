@@ -66,24 +66,24 @@ export default function ProctoringWidget({ sessionId }) {
   }, [cameraActive]);
 
   return (
-    <div className="fixed bottom-4 left-4 z-40">
-      <div className="bg-[#0b1329]/95 backdrop-blur border border-slate-800 rounded-xl p-3 shadow-2xl w-64 transition-all">
+    <div className="fixed bottom-4 left-4 z-40 font-sans">
+      <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 shadow-2xl w-64 transition-all">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {violationCount > 0 ? (
-              <ShieldAlert className="w-4 h-4 text-amber-400 animate-pulse" />
+              <ShieldAlert className="w-4 h-4 text-amber-500 animate-pulse" />
             ) : (
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
             )}
-            <span className="text-xs font-semibold text-slate-200">AI Anti-Cheat Monitor</span>
+            <span className="text-xs font-bold text-slate-800">AI Anti-Cheat Monitor</span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={toggleCamera}
-              className={`p-1 rounded-md transition ${
-                cameraActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+              className={`p-1 rounded-md transition cursor-pointer ${
+                cameraActive ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
               }`}
               title={cameraActive ? 'Turn Off Proctored Camera' : 'Turn On Proctored Camera'}
             >
@@ -91,7 +91,7 @@ export default function ProctoringWidget({ sessionId }) {
             </button>
             <button
               onClick={() => setMinimized(!minimized)}
-              className="p-1 rounded-md bg-slate-800 text-slate-400 hover:text-slate-200"
+              className="p-1 rounded-md bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 cursor-pointer"
             >
               {minimized ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             </button>
@@ -100,33 +100,33 @@ export default function ProctoringWidget({ sessionId }) {
 
         {/* Expanded View */}
         {!minimized && (
-          <div className="mt-2 space-y-2 text-xs border-t border-slate-800/60 pt-2">
+          <div className="mt-2 space-y-2 text-xs border-t border-slate-100 pt-2">
             {/* Camera Preview */}
             {cameraActive ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-black aspect-video">
+              <div className="relative rounded-xl overflow-hidden border border-slate-300 bg-slate-950 aspect-video shadow-xs">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100" />
-                <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded text-[10px] font-mono text-emerald-400">
+                <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-black/60 backdrop-blur px-1.5 py-0.5 rounded-md text-[10px] font-mono text-emerald-400 font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   Live Proctor
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-2.5 text-center text-slate-400 text-[11px]">
-                Webcam monitor inactive. Click <Camera className="w-3 h-3 inline text-emerald-400" /> to enable live video anti-cheat audit.
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center text-slate-500 text-[11px] leading-relaxed">
+                Webcam monitor inactive. Click <Camera className="w-3 h-3 inline text-indigo-600" /> to enable live video anti-cheat audit.
               </div>
             )}
 
             {/* Audit Status summary */}
-            <div className="flex items-center justify-between bg-slate-900/80 px-2 py-1.5 rounded border border-slate-800/60 text-[11px]">
-              <span className="text-slate-400">Session Integrity:</span>
-              <span className={`font-mono font-semibold ${violationCount === 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 text-[11px]">
+              <span className="text-slate-600 font-medium">Session Integrity:</span>
+              <span className={`font-mono font-bold ${violationCount === 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
                 {violationCount === 0 ? '100% (Clean)' : `${Math.max(40, 100 - violationCount * 10)}%`}
               </span>
             </div>
 
             {lastViolation && (
-              <div className="flex items-start gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 p-1.5 rounded text-[10px]">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 p-2 rounded-xl text-[10px] font-medium">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
                 <span>{lastViolation}</span>
               </div>
             )}

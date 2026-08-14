@@ -109,13 +109,13 @@ export default function MonacoCodeEditor({
   }
 
   return (
-    <div className="w-full rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-2xl space-y-0">
+    <div className="w-full rounded-2xl bg-[#0b0907] border border-amber-900/80 overflow-hidden shadow-2xl space-y-0">
       
       {/* Editor Header Bar */}
-      <div className="px-4 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
+      <div className="px-4 py-3 bg-[#1c1611] border-b border-amber-900/60 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-400 font-bold">
-            <Code2 className="w-4 h-4 text-indigo-400" />
+          <div className="flex items-center gap-1.5 text-xs font-mono text-amber-400 font-bold">
+            <Code2 className="w-4 h-4 text-amber-400" />
             <span>Monaco IDE Editor</span>
           </div>
 
@@ -123,7 +123,7 @@ export default function MonacoCodeEditor({
           <select
             value={language}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700/80 text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
+            className="px-3 py-1.5 rounded-lg bg-amber-950/80 border border-amber-800/80 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
           >
             <option value="javascript">JavaScript (Node.js)</option>
             <option value="python">Python 3.10</option>
@@ -136,16 +136,16 @@ export default function MonacoCodeEditor({
           type="button"
           disabled={running || !code.trim()}
           onClick={handleRunCode}
-          className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
         >
           {running ? (
             <>
-              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
               <span>Running...</span>
             </>
           ) : (
             <>
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-slate-950" />
               <span>Execute Code</span>
             </>
           )}
@@ -174,16 +174,16 @@ export default function MonacoCodeEditor({
 
       {/* Terminal Output Console */}
       {consoleOutput && (
-        <div className="p-4 bg-slate-900/90 border-t border-slate-800 font-mono text-xs text-left space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-800">
-            <span className="flex items-center gap-1.5 font-bold text-cyan-400">
-              <Terminal className="w-3.5 h-3.5 text-cyan-400" /> Output Terminal
+        <div className="p-4 bg-amber-950/90 border-t border-amber-900/60 font-mono text-xs text-left space-y-2">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 uppercase tracking-wider pb-1 border-b border-amber-900/60">
+            <span className="flex items-center gap-1.5 font-bold text-amber-400">
+              <Terminal className="w-3.5 h-3.5 text-amber-400" /> Output Terminal
             </span>
             <span>{consoleOutput.execution_time || '0.03s'}</span>
           </div>
 
           {consoleOutput.success ? (
-            <div className="text-emerald-400 whitespace-pre-wrap flex items-start gap-2">
+            <div className="text-amber-400 whitespace-pre-wrap flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
               <pre><code>{consoleOutput.output}</code></pre>
             </div>
