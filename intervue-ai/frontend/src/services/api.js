@@ -122,3 +122,17 @@ export const jdAPI = {
 export const recruiterAPI = {
   getLeaderboard: () => apiFetch('/recruiter/leaderboard'),
 };
+
+export const codingAPI = {
+  runCode: (code, language = 'python', testCases = null) =>
+    apiFetch('/coding/run', {
+      method: 'POST',
+      body: JSON.stringify({ code, language, test_cases: testCases }),
+    }),
+
+  submitCode: (sessionId, code, language = 'python') =>
+    apiFetch('/coding/submit', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, code, language }),
+    }),
+};
