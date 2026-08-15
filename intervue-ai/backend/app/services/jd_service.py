@@ -15,6 +15,7 @@ TECH_KEYWORDS = [
 ]
 
 from app.services.resume_service import RESUMES_DB
+from app.ai.semantic_matcher import SemanticMatcher
 
 class JDService:
     @staticmethod
@@ -39,6 +40,7 @@ class JDService:
         # Retrieve candidate's actual uploaded resume from RESUMES_DB
         candidate_resume = RESUMES_DB.get(user_id or "", {})
         user_skills = candidate_resume.get("skills", ["Python", "JavaScript", "React", "REST API", "SQL", "Git", "Node.js"])
+        resume_text = candidate_resume.get("raw_text", "")
 
         # Perform Resume-to-JD Gap Analysis
         matching_skills = [s for s in extracted_skills if any(u.lower() == s.lower() for u in user_skills)]
@@ -48,9 +50,13 @@ class JDService:
             matching_skills = extracted_skills[:2]
             missing_skills = extracted_skills[2:]
 
-        # Calculate exact ATS Resume-to-JD Match Score
-        total_req = max(1, len(extracted_skills))
-        resume_match_score = min(96, max(45, int((len(matching_skills) / total_req) * 100)))
+        # Calculate exact ATS Resume-to-JD Match Score using TF-IDF Cosine Vector Similarity
+        if resume_text:
+            sim_res = SemanticMatcher.compute_similarity(resume_text, jd_text)
+            resume_match_score = int(sim_res["match_score"])
+        else:
+            total_req = max(1, len(extracted_skills))
+            resume_match_score = min(96, max(45, int((len(matching_skills) / total_req) * 100)))
 
         # Determine experience level
         text_lower = jd_text.lower()

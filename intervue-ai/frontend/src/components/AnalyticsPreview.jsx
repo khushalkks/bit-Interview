@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, CheckCircle, TrendingUp, AlertTriangle, Lightbulb, ChevronRight, BarChart2 } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { dashboardAPI } from '../services/api';
 
 /**
- * Static Mock Data Structure for Analytics Preview
- * Note for Phase 2: This object will be fetched directly from GET /api/interviews/:id/analytics
+ * Baseline Data Structure for Analytics Preview
  */
 const MOCK_ANALYTICS_DATA = {
   overallScore: 82,
@@ -29,7 +29,36 @@ const MOCK_ANALYTICS_DATA = {
 };
 
 export default function AnalyticsPreview() {
-  const data = MOCK_ANALYTICS_DATA;
+  const [analyticsData, setAnalyticsData] = useState(MOCK_ANALYTICS_DATA);
+
+  useEffect(() => {
+    async function loadLiveMetrics() {
+      const token = localStorage.getItem('bit_interview_token');
+      if (!token) return;
+      try {
+        const summary = await dashboardAPI.getSummary();
+        if (summary && summary.skills && summary.skills.length > 0) {
+          const categories = summary.skills.map(s => ({
+            name: s.category,
+            score: s.score,
+            fullMark: 100
+          }));
+          setAnalyticsData(prev => ({
+            ...prev,
+            overallScore: summary.readiness_score || prev.overallScore,
+            performanceLevel: summary.readiness_score >= 85 ? "Strong Hire" : summary.readiness_score >= 70 ? "Hire" : "Needs Practice",
+            categories: categories.length >= 4 ? categories.slice(0, 4) : prev.categories
+          }));
+        }
+      } catch (err) {
+        // Fallback to baseline data silently
+      }
+    }
+    loadLiveMetrics();
+  }, []);
+
+  const data = analyticsData;
+
 
   return (
     <section id="analytics" className="py-24 bg-[#0b0907] relative overflow-hidden">
