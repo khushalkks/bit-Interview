@@ -11,6 +11,8 @@ import MonacoCodeEditor from '../components/MonacoCodeEditor';
 import VoiceInterviewerControls from '../components/VoiceInterviewerControls';
 import ProctoringWidget from '../components/ProctoringWidget';
 
+import SystemDesignWhiteboard from '../components/SystemDesignWhiteboard';
+
 export default function InterviewPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -23,13 +25,20 @@ export default function InterviewPage() {
 
   // Input states
   const [answerText, setAnswerText] = useState('');
-  const [activeTab, setActiveTab] = useState('text'); // 'text' | 'code'
+  const [activeTab, setActiveTab] = useState('text'); // 'text' | 'code' | 'system_design'
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
 
-  // Voice recording state (Web Speech API)
+  // AI Micro-Hint Drawer state
+  const [hintLevel, setHintLevel] = useState(0);
+  const [currentHint, setCurrentHint] = useState(null);
+  const [fetchingHint, setFetchingHint] = useState(false);
+
+  // Voice recording & Silence Nudge Timer state
   const [isListening, setIsListening] = useState(false);
+  const [silenceNudge, setSilenceNudge] = useState(false);
   const recognitionRef = useRef(null);
+  const silenceTimerRef = useRef(null);
 
   // Session timer
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -41,6 +50,9 @@ export default function InterviewPage() {
       try {
         const data = await interviewAPI.getSession(sessionId);
         setSession(data);
+        if (data.track_title && data.track_title.toLowerCase().includes('system')) {
+          setActiveTab('system_design');
+        }
       } catch (err) {
         console.error('Error fetching session:', err);
       } finally {
@@ -49,6 +61,39 @@ export default function InterviewPage() {
     }
     loadSession();
   }, [sessionId]);
+
+  // Silence Nudge Timer (Triggers audio nudge if user is quiet for 10s during answer drafting)
+  useEffect(() => {
+    if (session && session.status === 'active' && !submitting) {
+      silenceTimerRef.current = setTimeout(() => {
+        setSilenceNudge(true);
+      }, 12000);
+    }
+    return () => clearTimeout(silenceTimerRef.current);
+  }, [session, answerText, codeSnippet, submitting]);
+
+  // Request AI Micro-Hint
+  const handleRequestHint = async () => {
+    setFetchingHint(true);
+    const nextLevel = Math.min(3, hintLevel + 1);
+
+    try {
+      const res = await interviewAPI.getAiHint(sessionId, codeSnippet || answerText, nextLevel);
+      setHintLevel(nextLevel);
+      setCurrentHint(res.hint);
+    } catch (err) {
+      // Fallback micro-hint if API offline
+      setHintLevel(nextLevel);
+      const hints = [
+        "Focus on reducing nested loops. Can a Hash Map optimize lookups to O(1)?",
+        "Consider using a Two-Pointer strategy or Sliding Window for space optimization.",
+        "Pseudocode: Maintain map[value] = index. Check if target - val exists in map."
+      ];
+      setCurrentHint(hints[nextLevel - 1] || hints[0]);
+    } finally {
+      setFetchingHint(false);
+    }
+  };
 
   // Session timer ticker
   useEffect(() => {
@@ -349,7 +394,6 @@ export default function InterviewPage() {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Text Explanation</span>
               </button>
-
               <button
                 type="button"
                 onClick={() => setActiveTab('code')}
@@ -362,22 +406,63 @@ export default function InterviewPage() {
                 <Code2 className="w-3.5 h-3.5" />
                 <span>Code Editor</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('system_design')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'system_design'
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                <span>System Design Canvas</span>
+              </button>
             </div>
 
-            {/* Voice Input Web Speech API toggle */}
-            <button
-              type="button"
-              onClick={toggleVoiceRecording}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
-                isListening
-                  ? 'bg-rose-50 border-rose-300 text-rose-600 animate-pulse'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
-              }`}
-            >
-              {isListening ? <MicOff className="w-4 h-4 text-rose-600" /> : <Mic className="w-4 h-4 text-indigo-600" />}
-              <span>{isListening ? 'Recording... (Click to Stop)' : 'Voice-to-Text'}</span>
-            </button>
+            {/* AI Micro-Hint & Voice Silence Nudge Controls */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRequestHint}
+                disabled={fetchingHint}
+                className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{fetchingHint ? 'Fetching...' : `Get AI Hint (${hintLevel}/3)`}</span>
+              </button>
+
+              {/* Voice Input Web Speech API toggle */}
+              <button
+                type="button"
+                onClick={toggleVoiceRecording}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
+                  isListening
+                    ? 'bg-rose-50 border-rose-300 text-rose-600 animate-pulse'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4 text-rose-600" /> : <Mic className="w-4 h-4 text-indigo-600" />}
+                <span>{isListening ? 'Recording...' : 'Voice-to-Text'}</span>
+              </button>
+            </div>
           </div>
+
+          {/* AI Hint Popup Box if unlocked */}
+          {currentHint && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3.5 rounded-2xl bg-indigo-950 text-indigo-100 border border-indigo-500/40 text-xs font-mono flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span><strong>AI Hint Level {hintLevel}:</strong> {currentHint}</span>
+              </div>
+              <button onClick={() => setCurrentHint(null)} className="text-slate-400 hover:text-white text-xs font-bold ml-2">✕</button>
+            </motion.div>
+          )}
 
           {/* Active Tab View */}
           {activeTab === 'text' ? (

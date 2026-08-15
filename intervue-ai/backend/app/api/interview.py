@@ -35,6 +35,19 @@ def get_user_interview_history(current_user: dict = Depends(get_current_user)):
     user_id = current_user["id"]
     return InterviewService.get_user_history(user_id)
 
+@router.post("/{session_id}/ai-hint")
+def request_ai_hint(
+    session_id: str,
+    payload: dict = None,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        current_code = payload.get("current_code", "") if payload else ""
+        level = payload.get("level", 1) if payload else 1
+        return InterviewService.generate_ai_hint(session_id, current_code, level)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 @router.get("/{session_id}", response_model=InterviewSessionResponse)
 def get_interview_session(
     session_id: str,

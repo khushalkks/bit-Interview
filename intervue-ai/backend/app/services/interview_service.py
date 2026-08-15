@@ -583,3 +583,17 @@ class InterviewService:
         ]
         return sorted(user_sessions, key=lambda x: x["started_at"], reverse=True)
 
+    @staticmethod
+    def generate_ai_hint(session_id: str, current_code: str = "", level: int = 1) -> dict:
+        hints_map = {
+            1: "Intuition Hint: Consider whether a Hash Map can store previously seen values to reduce quadratic O(N²) time down to linear O(N).",
+            2: "Data Structure Hint: Use a hash table map[value] = index to check if the complement (target - num) exists in a single pass.",
+            3: "Pseudocode Hint:\nfor i, num in enumerate(nums):\n    comp = target - num\n    if comp in map:\n        return [map[comp], i]\n    map[num] = i"
+        }
+        selected_hint = hints_map.get(level, hints_map[1])
+        return {
+            "session_id": session_id,
+            "level": level,
+            "hint": selected_hint
+        }
+

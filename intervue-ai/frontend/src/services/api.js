@@ -106,6 +106,12 @@ export const interviewAPI = {
       body: JSON.stringify({ event_type: eventType, details }),
     }),
 
+  getAiHint: (sessionId, currentCode = '', level = 1) =>
+    apiFetch(`/interview/${sessionId}/ai-hint`, {
+      method: 'POST',
+      body: JSON.stringify({ current_code: currentCode, level }),
+    }),
+
   getHistory: () => apiFetch('/interview/history'),
 };
 
