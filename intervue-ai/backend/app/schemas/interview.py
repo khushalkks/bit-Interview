@@ -18,6 +18,10 @@ class StartInterviewRequest(BaseModel):
     track: TrackEnum = TrackEnum.TECHNICAL
     target_role: Optional[str] = "Full Stack Engineer"
     difficulty: DifficultyEnum = DifficultyEnum.MEDIUM
+    resume_text: Optional[str] = None
+    jd_text: Optional[str] = None
+    candidate_name: Optional[str] = None
+    company_name: Optional[str] = None
 
 class CandidateAnswerRequest(BaseModel):
     answer_text: str

@@ -75,10 +75,26 @@ export const resumeAPI = {
 };
 
 export const interviewAPI = {
-  start: (track = 'technical', difficulty = 'Medium', targetRole = 'Full Stack Engineer') =>
+  start: (
+    track = 'technical',
+    difficulty = 'Medium',
+    targetRole = 'Full Stack Engineer',
+    candidateName = null,
+    companyName = null,
+    resumeText = null,
+    jdText = null
+  ) =>
     apiFetch('/interview/start', {
       method: 'POST',
-      body: JSON.stringify({ track, difficulty, target_role: targetRole }),
+      body: JSON.stringify({
+        track,
+        difficulty,
+        target_role: targetRole,
+        candidate_name: candidateName,
+        company_name: companyName,
+        resume_text: resumeText,
+        jd_text: jdText,
+      }),
     }),
 
   getSession: (sessionId) => apiFetch(`/interview/${sessionId}`),

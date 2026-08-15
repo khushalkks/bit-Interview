@@ -4,12 +4,17 @@ from datetime import datetime
 
 class LangGraphInterviewState:
     """State schema for LangGraph agent node transitions"""
-    def __init__(self, session_id: str, track: str, target_role: str, initial_difficulty: str = "Medium"):
+    def __init__(self, session_id: str, track: str, target_role: str, initial_difficulty: str = "Medium", candidate_name: str = "Candidate", matched_skills: List[str] = None, skill_gaps: List[str] = None, company_name: str = "Target Company"):
         self.session_id = session_id
         self.track = track
         self.target_role = target_role
         self.current_difficulty = initial_difficulty
+        self.candidate_name = candidate_name
+        self.company_name = company_name
+        self.matched_skills = matched_skills or ["Python", "JavaScript", "React", "REST APIs"]
+        self.skill_gaps = skill_gaps or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
         self.step_index = 0
+        self.stage = "ICEBREAKER" # ICEBREAKER -> RESUME_DEEP_DIVE -> JD_SKILL_GAPS -> TECHNICAL_CODING
         self.messages: List[dict] = []
         self.evaluations: List[dict] = []
         self.topics_covered: List[str] = []
@@ -22,8 +27,13 @@ class LangGraphInterviewState:
             "session_id": self.session_id,
             "track": self.track,
             "target_role": self.target_role,
+            "candidate_name": self.candidate_name,
+            "company_name": self.company_name,
+            "matched_skills": self.matched_skills,
+            "skill_gaps": self.skill_gaps,
             "current_difficulty": self.current_difficulty,
             "step_index": self.step_index,
+            "stage": self.stage,
             "messages": self.messages,
             "evaluations": self.evaluations,
             "topics_covered": self.topics_covered,
@@ -36,7 +46,7 @@ class LangGraphAdaptiveAgent:
     """
     Agentic Workflow Graph implementing LangGraph-style state machine transitions
     Nodes:
-      1. QuestionGeneratorNode
+      1. QuestionGeneratorNode (Icebreaker -> Resume Projects -> JD Gaps -> Coding)
       2. CandidateResponseNode
       3. InterruptionCheckNode (Silence/Ramble/Vague Interruption Loop)
       4. EvaluatorNode (Technical Accuracy & Complexity Scoring)
@@ -46,46 +56,57 @@ class LangGraphAdaptiveAgent:
     """
 
     @staticmethod
-    def execute_question_node(state: LangGraphInterviewState, candidate_skills: List[str]) -> dict:
-        """Node 1: Question Generator Node"""
+    def execute_question_node(state: LangGraphInterviewState, candidate_skills: List[str] = None) -> dict:
+        """Node 1: Personalized Question Generator Node using Candidate Resume + JD State"""
         track = state.track
         role = state.target_role
         diff = state.current_difficulty
-        
-        skill_str = ", ".join(candidate_skills[:3]) if candidate_skills else "Full Stack Engineering"
+        name = state.candidate_name
+        company = state.company_name
+        skills = state.matched_skills or ["Python", "React"]
+        gaps = state.skill_gaps or ["System Architecture"]
+        step = state.step_index
 
-        questions_map = {
-            "technical": [
-                f"For a {role} role proficient in {skill_str}: Can you explain how asynchronous non-blocking event loops handle high concurrency, and how event loop starvation can be prevented?",
-                f"Deep dive in {skill_str}: Compare REST API architecture vs GraphQL vs WebSockets. Under what latency and bandwidth constraints would you choose each?",
-                f"Database internals: How do index structures (B-Trees vs Hash Indexes) optimize lookup performance, and what write overhead occurs during high INSERT throughput?"
-            ],
-            "coding": [
-                "Coding Sandbox Challenge: Implement an LRU Cache data structure supporting get(key) and put(key, value) in O(1) time complexity. Write your code solution in the Monaco editor.",
-                "Coding Challenge: Given a string s, find the length of the longest substring without repeating characters. Implement your algorithm in the Monaco editor.",
-                "Coding Challenge: Design a function to validate if a string containing parentheses '()[]{}' is balanced using an efficient Stack data structure."
-            ],
-            "system_design": [
-                f"System Architecture for {role}: Design a scalable Rate Limiting middleware (e.g. 100 requests/minute per user) capable of processing 50,000 requests/second across distributed API gateways.",
-                "System Architecture: Design a real-time Notification Service (supporting Push, Email, SMS) with retry mechanisms, dead-letter queues, and idempotency.",
-                "Database Architecture: Design a URL shortener service (like bit.ly) handling 10 Million daily redirects. Explain database sharding and caching strategies."
-            ],
-            "behavioral": [
-                "Behavioral STAR Method: Describe a situation where a critical production bug occurred right before a high-stakes release. How did you diagnose, communicate, and fix it under pressure?",
-                "Behavioral: Tell me about a technical debate you had with a teammate regarding system architecture. How did you resolve the disagreement constructively?",
-                "Behavioral: Describe a project where requirements were vague or rapidly changing. How did you structure your work to deliver high quality on time?"
-            ]
-        }
+        top_skill = skills[0] if skills else "Software Engineering"
+        second_skill = skills[1] if len(skills) > 1 else "Web Development"
+        gap_skill = gaps[0] if gaps else "Distributed Systems"
 
-        q_list = questions_map.get(track, questions_map["technical"])
-        idx = state.step_index % len(q_list)
-        question_text = q_list[idx]
+        # Stage Progression Logic
+        if step == 0:
+            state.stage = "ICEBREAKER"
+            question_text = (
+                f"Hello {name}! Welcome to your Bit-Interview session for the {role} position at {company}.\n\n"
+                f"I reviewed your profile and noticed strong expertise in **{top_skill}** and **{second_skill}**. "
+                f"To kick off our round today, could you briefly introduce yourself and highlight a complex engineering project you built using {top_skill}?"
+            )
+        elif step == 1:
+            state.stage = "RESUME_DEEP_DIVE"
+            question_text = (
+                f"Thanks for that introduction, {name}! Digging deeper into your experience with **{top_skill}**:\n\n"
+                f"When designing systems with {top_skill}, how do you handle performance optimization, memory management, and asynchronous I/O bottlenecks under heavy traffic?"
+            )
+        elif step == 2:
+            state.stage = "JD_SKILL_GAPS"
+            question_text = (
+                f"Great technical points. Now, looking at the job requirements for **{role}**, one key technology expected is **{gap_skill}**.\n\n"
+                f"Can you explain your experience or architectural intuition regarding {gap_skill}? How would you design fault tolerance and state caching for it?"
+            )
+        else:
+            state.stage = "TECHNICAL_CODING"
+            questions_map = {
+                "technical": f"Coding Sandbox Challenge for {role}: Implement an LRU Cache data structure supporting get(key) and put(key, value) in O(1) time. Write your code solution in the Monaco editor.",
+                "coding": "Coding Challenge: Given a string s, find the length of the longest substring without repeating characters. Implement your algorithm in the Monaco editor.",
+                "system_design": f"System Architecture Challenge for {role}: Design a scalable Rate Limiting middleware (e.g. 100 requests/minute per user) handling 50,000 req/sec across API gateways.",
+                "behavioral": "Behavioral STAR Method: Describe a situation where a critical production bug occurred right before a release. How did you diagnose, communicate, and fix it under pressure?"
+            }
+            question_text = questions_map.get(track, questions_map["technical"])
 
         question_msg = {
             "id": f"msg_{uuid.uuid4().hex[:8]}",
             "sender": "interviewer",
             "content": question_text,
             "difficulty": diff,
+            "stage": state.stage,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "node": "QuestionGeneratorNode"
         }

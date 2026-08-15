@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Cpu, Code2, Server, Users, Zap, Sparkles, Play, ShieldAlert, Award } from 'lucide-react';
+import { X, Cpu, Code2, Server, Users, Sparkles, Play, FileText, ArrowRight, UserCheck, Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { interviewAPI } from '../services/api';
 
@@ -10,8 +10,8 @@ const TRACKS = [
     title: 'Technical Deep-Dive',
     desc: 'Core CS concepts, framework internals, language features, & async programming.',
     icon: Cpu,
-    color: 'from-amber-400 to-orange-500',
-    borderColor: 'hover:border-amber-500/50',
+    color: 'from-[#38bdf8] to-[#818cf8]',
+    borderColor: 'hover:border-cyan-500/50',
     badge: 'Popular',
   },
   {
@@ -19,17 +19,17 @@ const TRACKS = [
     title: 'Coding & Algorithms',
     desc: 'Interactive code editor sandbox with live data structure & complexity challenges.',
     icon: Code2,
-    color: 'from-amber-500 to-yellow-400',
-    borderColor: 'hover:border-amber-500/50',
-    badge: 'Interactive Code',
+    color: 'from-[#818cf8] to-[#a855f7]',
+    borderColor: 'hover:border-indigo-500/50',
+    badge: 'Monaco IDE',
   },
   {
     id: 'system_design',
     title: 'System Design & Architecture',
-    desc: 'Distributed systems, database scaling, caching, microservices, & CAP theorem.',
+    desc: 'Distributed systems, database scaling, caching, microservices, & whiteboard node builder.',
     icon: Server,
-    color: 'from-orange-500 to-amber-400',
-    borderColor: 'hover:border-orange-500/50',
+    color: 'from-[#a855f7] to-[#ec4899]',
+    borderColor: 'hover:border-purple-500/50',
     badge: 'Senior/Lead',
   },
   {
@@ -37,19 +37,32 @@ const TRACKS = [
     title: 'Behavioral STAR Method',
     desc: 'Conflict resolution, leadership scenarios, project hurdles, & communication skills.',
     icon: Users,
-    color: 'from-amber-400 to-amber-600',
-    borderColor: 'hover:border-amber-500/50',
+    color: 'from-[#34d399] to-[#059669]',
+    borderColor: 'hover:border-emerald-500/50',
     badge: 'Soft Skills',
   },
 ];
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Advanced'];
 
-export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Full Stack Engineer' }) {
+export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Senior Full Stack Engineer' }) {
   const navigate = useNavigate();
+
+  // Wizard Step: 1 = Track & Difficulty, 2 = Candidate Profile & Resume/JD Target
+  const [step, setStep] = useState(1);
+
   const [selectedTrack, setSelectedTrack] = useState('technical');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Medium');
   const [targetRole, setTargetRole] = useState(defaultRole);
+  const [candidateName, setCandidateName] = useState('Khushal Kumar');
+  const [companyName, setCompanyName] = useState('Target Tech Corp');
+  const [resumeText, setResumeText] = useState(
+    'Experienced Full Stack Engineer with 3+ years in React, Python (FastAPI/Django), Node.js, SQL databases, and REST APIs.'
+  );
+  const [jdText, setJdText] = useState(
+    'Looking for a Senior Full Stack Engineer skilled in React, Python microservices, Redis caching, System Design, and Docker.'
+  );
+
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,11 +72,19 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Fu
     setStarting(true);
     setError('');
     try {
-      const res = await interviewAPI.start(selectedTrack, selectedDifficulty, targetRole);
+      const res = await interviewAPI.start(
+        selectedTrack,
+        selectedDifficulty,
+        targetRole,
+        candidateName,
+        companyName,
+        resumeText,
+        jdText
+      );
       onClose();
       navigate(`/interview/${res.session_id}`);
     } catch (err) {
-      console.error('Failed to start session:', err);
+      console.error('Failed to start personalized session:', err);
       setError(err.message || 'Failed to initialize session. Please try again.');
     } finally {
       setStarting(false);
@@ -77,146 +98,202 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Fu
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-3xl bg-[#14100c]/95 border border-amber-900/80 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden"
+          className="relative w-full max-w-3xl bg-[#0b0f19] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden"
         >
-          {/* Ambient light glow */}
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-orange-500/10 rounded-full blur-[100px] pointer-events-none" />
+          {/* Background Ambient Glows */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white rounded-xl bg-amber-950/80 hover:bg-amber-900 transition-colors border border-amber-900/60"
+            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-900 hover:bg-slate-800 transition-colors border border-slate-800"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Header */}
-          <div className="space-y-2 mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-orange-300" />
-              <span>Adaptive AI Interview Launcher</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Choose Interview Track & Settings
-            </h2>
-            <p className="text-sm text-slate-400">
-              Select your round focus. The AI will dynamically evaluate your answers and adapt difficulty in real time.
-            </p>
+          {/* Wizard Step Indicator */}
+          <div className="flex items-center gap-2 mb-6">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 1 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-slate-900 text-slate-400'}`}>
+              Step 1: Choose Track
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${step === 2 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-slate-900 text-slate-400'}`}>
+              Step 2: Resume & Job Target
+            </span>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+          {/* STEP 1: Select Track & Difficulty */}
+          {step === 1 ? (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-black text-white tracking-tight">Select Technical Track</h2>
+                <p className="text-sm text-slate-400 mt-1">Choose the specialization for your Bit-Interview session.</p>
+              </div>
 
-          {/* Role Input & Difficulty Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Target Role
-              </label>
-              <input
-                type="text"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="e.g. Senior Backend Engineer"
-                className="w-full px-4 py-3 rounded-xl bg-amber-950/80 border border-amber-900/80 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm font-medium transition-colors"
-              />
-            </div>
+              {/* Track Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {TRACKS.map((t) => {
+                  const Icon = t.icon;
+                  const isSelected = selectedTrack === t.id;
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTrack(t.id)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-[#0f172a] border-cyan-400/80 shadow-lg shadow-cyan-500/10'
+                          : 'bg-slate-900/60 border-slate-800 hover:border-indigo-500/50'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${t.color} p-[1px]`}>
+                            <div className="w-full h-full bg-[#0b0f19] rounded-[11px] flex items-center justify-center">
+                              <Icon className="w-4 h-4 text-white" />
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                            {t.badge}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white">{t.title}</h4>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Starting Difficulty
-              </label>
-              <div className="grid grid-cols-4 gap-1.5 p-1 bg-amber-950/80 border border-amber-900/80 rounded-xl">
-                {DIFFICULTIES.map((diff) => (
-                  <button
-                    key={diff}
-                    type="button"
-                    onClick={() => setSelectedDifficulty(diff)}
-                    className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                      selectedDifficulty === diff
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {diff}
-                  </button>
-                ))}
+              {/* Difficulty Selection */}
+              <div className="pt-2">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">Target Difficulty Level</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {DIFFICULTIES.map((d) => {
+                    const isSelected = selectedDifficulty === d;
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setSelectedDifficulty(d)}
+                        className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 border-cyan-400 shadow-md font-black'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Next Button */}
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-black text-sm shadow-xl flex items-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform"
+                >
+                  <span>Next: Resume & JD Setup</span>
+                  <ArrowRight className="w-4 h-4 text-slate-950" />
+                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            /* STEP 2: Candidate Profile & Resume/JD Matching Target */
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-2xl font-black text-white tracking-tight">Personalize Your Interview</h2>
+                <p className="text-sm text-slate-400 mt-1">Connect your Resume and Target Job Description for customized AI questions.</p>
+              </div>
 
-          {/* Track Selection Cards */}
-          <div className="space-y-2 mb-8">
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Select Round Track
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {TRACKS.map((t) => {
-                const Icon = t.icon;
-                const isSelected = selectedTrack === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setSelectedTrack(t.id)}
-                    className={`text-left p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-amber-950/90 border-amber-500 shadow-lg shadow-amber-500/10'
-                        : 'bg-amber-950/40 border-amber-900/60 hover:bg-amber-950/80 ' + t.borderColor
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`p-2.5 rounded-xl bg-gradient-to-r ${t.color} text-slate-950 font-bold shadow-md`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-900/60 border border-amber-800/50 text-slate-300">
-                        {t.badge}
-                      </span>
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Candidate Name */}
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Candidate Name</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={candidateName}
+                      onChange={(e) => setCandidateName(e.target.value)}
+                      placeholder="e.g. Khushal Kumar"
+                      className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
 
-                    <div>
-                      <h4 className="text-base font-bold text-white mb-1">{t.title}</h4>
-                      <p className="text-xs text-slate-400 leading-relaxed">{t.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
+                {/* Target Role & Company */}
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Target Role & Company</label>
+                  <input
+                    type="text"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                    placeholder="e.g. Senior Full Stack Engineer"
+                    className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Resume Text */}
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Your Resume Skills & Projects Summary</label>
+                <textarea
+                  rows={3}
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="Paste your key resume bullet points or project experience..."
+                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+
+              {/* Target Job Description */}
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Target Job Description (JD)</label>
+                <textarea
+                  rows={3}
+                  value={jdText}
+                  onChange={(e) => setJdText(e.target.value)}
+                  placeholder="Paste target job requirements or responsibilities..."
+                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+
+              {error && <p className="text-xs text-rose-400 font-semibold">{error}</p>}
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold cursor-pointer hover:bg-slate-800"
+                >
+                  ← Back
+                </button>
+
+                <button
+                  type="button"
+                  disabled={starting}
+                  onClick={handleStartSession}
+                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 text-slate-950 font-black text-sm shadow-xl flex items-center gap-2 cursor-pointer hover:scale-[1.02] transition-transform disabled:opacity-50"
+                >
+                  {starting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                      <span>Parsing Resume & Matching JD...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      <span>Launch Personalised Interview</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-
-          {/* Action Footer */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-900/60">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-3 rounded-xl text-slate-400 hover:text-white font-medium text-sm transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={starting}
-              onClick={handleStartSession}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-sm shadow-xl shadow-amber-500/20 flex items-center gap-2 disabled:opacity-50 transition-all hover:scale-[1.02]"
-            >
-              {starting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  <span>Initializing Session...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-slate-950" />
-                  <span>Start Interview Room</span>
-                </>
-              )}
-            </button>
-          </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

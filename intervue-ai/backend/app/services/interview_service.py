@@ -74,42 +74,62 @@ class InterviewService:
         user_id: str,
         track: TrackEnum = TrackEnum.TECHNICAL,
         target_role: Optional[str] = "Full Stack Engineer",
-        difficulty: DifficultyEnum = DifficultyEnum.MEDIUM
+        difficulty: DifficultyEnum = DifficultyEnum.MEDIUM,
+        resume_text: Optional[str] = None,
+        jd_text: Optional[str] = None,
+        candidate_name: Optional[str] = None,
+        company_name: Optional[str] = None
     ) -> InterviewSessionResponse:
         session_id = f"session_{uuid.uuid4().hex[:10]}"
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Context personalization from candidate resume if present
+        # 1. Fetch user context & perform ATS Semantic Matching
         user_resume = RESUMES_DB.get(user_id, {})
-        skills = user_resume.get("skills", [])
-        
-        # Pick opening question based on track and resume context
-        track_questions = INITIAL_QUESTIONS.get(track, INITIAL_QUESTIONS[TrackEnum.TECHNICAL])
-        opening_content = track_questions[len(SESSIONS_DB) % len(track_questions)]
+        extracted_resume = resume_text or user_resume.get("raw_text") or "Experienced Senior Software Developer in React, Python, Node.js, and SQL databases."
+        target_jd = jd_text or "Senior Full Stack Engineer position requiring Microservices, Redis Caching, Kafka, System Design, and Python/JavaScript proficiency."
+        c_name = candidate_name or user_resume.get("name") or "Candidate"
+        c_company = company_name or "Target Company"
 
-        if skills:
-            top_skills = ", ".join(skills[:3])
-            opening_content += f"\n\n*(Note: I noticed your background includes {top_skills}. Feel free to ground your responses in real-world projects using these technologies!)*"
+        # Semantic Match extraction
+        from app.ai.semantic_matcher import SemanticMatcher
+        match_result = SemanticMatcher.calculate_ats_score(extracted_resume, target_jd)
+        matched_skills = match_result.get("matched_skills") or ["Python", "JavaScript", "React", "SQL"]
+        skill_gaps = match_result.get("missing_skills") or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
 
-        first_message = InterviewMessage(
-            id=f"msg_{uuid.uuid4().hex[:8]}",
-            sender="interviewer",
-            content=opening_content,
-            difficulty=difficulty.value,
-            timestamp=now
+        # 2. Instantiate LangGraph Interview State
+        state = LangGraphInterviewState(
+            session_id=session_id,
+            track=track.value,
+            target_role=target_role,
+            initial_difficulty=difficulty.value,
+            candidate_name=c_name,
+            company_name=c_company,
+            matched_skills=matched_skills,
+            skill_gaps=skill_gaps
         )
+
+        # 3. Execute LangGraph Question Generator Node for Node 1 (Icebreaker)
+        opening_msg_dict = LangGraphAdaptiveAgent.execute_question_node(state)
+        first_message = InterviewMessage(**opening_msg_dict)
 
         session_data = {
             "session_id": session_id,
             "user_id": user_id,
             "track": track.value,
             "track_title": TRACK_TITLES.get(track, "Technical Round"),
-            "target_role": target_role or "Software Engineer",
+            "target_role": target_role,
+            "company_name": c_company,
             "status": "active",
             "current_difficulty": difficulty.value,
+            "candidate_name": c_name,
+            "matched_skills": matched_skills,
+            "skill_gaps": skill_gaps,
+            "ats_match_percentage": match_result.get("overall_match_percentage", 85.0),
             "question_count": 1,
             "started_at": now,
-            "messages": [first_message.dict()]
+            "messages": [first_message.dict()],
+            "evaluations": [],
+            "langgraph_state": state.to_dict()
         }
 
         SESSIONS_DB[session_id] = session_data
@@ -117,8 +137,8 @@ class InterviewService:
         return InterviewSessionResponse(
             session_id=session_id,
             track=track.value,
-            track_title=session_data["track_title"],
-            target_role=session_data["target_role"],
+            track_title=TRACK_TITLES.get(track, "Technical Round"),
+            target_role=target_role,
             status="active",
             current_difficulty=difficulty.value,
             question_count=1,
@@ -160,12 +180,17 @@ class InterviewService:
         # Interruption check node (Silence / Ramble / Vague responses)
         interruption = LangGraphAdaptiveAgent.execute_interruption_check_node(answer_text)
         
-        # Build LangGraph State
+        # Reconstruct LangGraph State from Session DB
+        lg_dict = session.get("langgraph_state", {})
         state = LangGraphInterviewState(
             session_id=session_id,
             track=session["track"],
             target_role=session["target_role"],
-            initial_difficulty=current_diff
+            initial_difficulty=current_diff,
+            candidate_name=session.get("candidate_name", "Candidate"),
+            company_name=session.get("company_name", "Target Company"),
+            matched_skills=session.get("matched_skills"),
+            skill_gaps=session.get("skill_gaps")
         )
         state.step_index = session["question_count"]
 
@@ -181,23 +206,26 @@ class InterviewService:
             next_diff = DifficultyEnum.MEDIUM
 
         session["current_difficulty"] = next_diff.value
-        session["question_count"] += 1
 
-        # 3. Generate Next Interviewer Response
+        # 3. Generate Next Question based on Stage Progression (Icebreaker -> Resume -> JD Gap -> Coding)
         if interruption:
             follow_up_text = f"{interruption['interviewer_prompt']}\n\nCan you summarize your core approach in 2-3 concise bullet points?"
+            ai_msg_dict = {
+                "id": f"msg_{uuid.uuid4().hex[:8]}",
+                "sender": "interviewer",
+                "content": f"**Feedback**: {eval_hint}\n\n{follow_up_text}",
+                "difficulty": next_diff.value,
+                "timestamp": now,
+                "evaluation_hint": eval_hint
+            }
+            session["question_count"] += 1
         else:
-            follow_ups = ADAPTIVE_FOLLOW_UPS.get(next_diff, ADAPTIVE_FOLLOW_UPS[DifficultyEnum.MEDIUM])
-            follow_up_text = follow_ups[session["question_count"] % len(follow_ups)]
+            ai_msg_dict = LangGraphAdaptiveAgent.execute_question_node(state)
+            ai_msg_dict["content"] = f"**Feedback on your response**: {eval_hint}\n\n{ai_msg_dict['content']}"
+            session["question_count"] = state.step_index
 
-        ai_msg = InterviewMessage(
-            id=f"msg_{uuid.uuid4().hex[:8]}",
-            sender="interviewer",
-            content=f"**Evaluation**: {eval_hint}\n\n{follow_up_text}",
-            difficulty=next_diff.value,
-            timestamp=now,
-            evaluation_hint=eval_hint
-        )
+        session["langgraph_state"] = state.to_dict()
+        ai_msg = InterviewMessage(**ai_msg_dict)
         session["messages"].append(ai_msg.dict())
 
         return InterviewSessionResponse(

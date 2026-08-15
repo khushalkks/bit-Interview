@@ -258,6 +258,23 @@ export default function InterviewPage() {
             </div>
           </div>
 
+          {/* Candidate Personalization & ATS Match Context Pills */}
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex flex-col text-right">
+              <div className="text-xs font-bold text-slate-800">
+                Candidate: <span className="text-indigo-600">{session.candidate_name || 'Khushal Kumar'}</span>
+              </div>
+              <div className="text-[11px] text-slate-500 font-mono">
+                ATS Match: <span className="text-emerald-600 font-bold">{session.ats_match_percentage || 88}%</span>
+              </div>
+            </div>
+
+            <div className="text-xs font-mono text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-2 font-bold">
+              <Clock className="w-4 h-4 text-indigo-600" />
+              <span>{formatTimer(secondsElapsed)}</span>
+            </div>
+          </div>
+
           {/* Center Status Controls */}
           <div className="flex flex-wrap items-center gap-4">
             {/* AI Voice Readout Controls */}

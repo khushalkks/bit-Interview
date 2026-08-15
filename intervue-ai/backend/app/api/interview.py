@@ -21,7 +21,11 @@ def start_interview_session(
             user_id=user_id,
             track=payload.track,
             target_role=target_role,
-            difficulty=payload.difficulty
+            difficulty=payload.difficulty,
+            resume_text=payload.resume_text,
+            jd_text=payload.jd_text,
+            candidate_name=payload.candidate_name or current_user.get("full_name") or current_user.get("username"),
+            company_name=payload.company_name
         )
         return session
     except Exception as e:
