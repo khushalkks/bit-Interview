@@ -18,6 +18,9 @@ class StartInterviewRequest(BaseModel):
     track: TrackEnum = TrackEnum.TECHNICAL
     target_role: Optional[str] = "Full Stack Engineer"
     difficulty: DifficultyEnum = DifficultyEnum.MEDIUM
+    persona: Optional[str] = "Sarah"  # Sarah (Supportive) | Daniel (Corporate) | Fin (Pressure) | Clyde (Probing)
+    duration: Optional[str] = "30 min"
+    target_level: Optional[str] = "Senior SWE"
     resume_text: Optional[str] = None
     jd_text: Optional[str] = None
     candidate_name: Optional[str] = None
@@ -47,6 +50,9 @@ class InterviewSessionResponse(BaseModel):
     current_difficulty: str
     question_count: int
     started_at: str
+    persona: Optional[str] = "Sarah"
+    duration: Optional[str] = "30 min"
+    target_level: Optional[str] = "Senior SWE"
     messages: List[InterviewMessage] = Field(default_factory=list)
 
 class QuestionAnalysisItem(BaseModel):

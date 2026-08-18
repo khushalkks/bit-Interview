@@ -4,61 +4,31 @@ import { Play, Code2, CheckCircle2, AlertCircle, Terminal, Cpu, Clock } from 'lu
 import { codingAPI } from '../services/api';
 
 const STARTER_SNIPPETS = {
-  javascript: `// JavaScript Coding Solution
-function twoSum(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const diff = target - nums[i];
-    if (map.has(diff)) {
-      return [map.get(diff), i];
-    }
-    map.set(nums[i], i);
-  }
-  return [];
+  javascript: `// Write your JavaScript solution here
+function solution() {
+  
 }
 
-console.log("Result:", twoSum([2, 7, 11, 15], 9));`,
+console.log(solution());`,
 
-  python: `# Python Coding Solution
-def two_sum(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        diff = target - num
-        if diff in seen:
-            return [seen[diff], i]
-        seen[num] = i
-    return []
+  python: `# Write your Python solution here
+def solution():
+    pass
 
-print("Result:", two_sum([2, 7, 11, 15], 9))`,
+print(solution())`,
 
-  cpp: `// C++ 20 Solution
+  cpp: `// Write your C++ solution here
 #include <iostream>
-#include <vector>
-#include <unordered_map>
-
-std::vector<int> twoSum(std::vector<int>& nums, int target) {
-    std::unordered_map<int, int> map;
-    for (int i = 0; i < nums.size(); i++) {
-        int diff = target - nums[i];
-        if (map.find(diff) != map.end()) {
-            return {map[diff], i};
-        }
-        map[nums[i]] = i;
-    }
-    return {};
-}
 
 int main() {
-    std::cout << "C++ Solution Compiled Successfully!" << std::endl;
+    std::cout << "Hello World" << std::endl;
     return 0;
 }`,
 
-  java: `// Java 17 Solution
-import java.util.HashMap;
-
+  java: `// Write your Java solution here
 public class Solution {
     public static void main(String[] args) {
-        System.out.println("Java Solution Compiled Successfully!");
+        System.out.println("Hello World");
     }
 }`
 };

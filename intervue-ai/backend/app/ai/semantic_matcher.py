@@ -51,3 +51,19 @@ class SemanticMatcher:
             "matching_skills": [m.capitalize() for m in matching[:8]],
             "missing_skills": [m.capitalize() for m in missing[:5]]
         }
+
+    @staticmethod
+    def calculate_ats_score(resume_text: str, target_role_desc: str) -> Dict[str, Any]:
+        """
+        Calculate ATS score and skill gaps between resume and job description.
+        """
+        sim_res = SemanticMatcher.compute_similarity(resume_text, target_role_desc)
+        return {
+            "ats_score": sim_res["match_score"],
+            "match_score": sim_res["match_score"],
+            "matched_skills": sim_res.get("matching_skills", []),
+            "matching_skills": sim_res.get("matching_skills", []),
+            "missing_skills": sim_res.get("missing_skills", []),
+            "matching_keywords_count": sim_res.get("matching_keywords_count", 0)
+        }
+

@@ -2,16 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bot, User, Send, Mic, MicOff, Code2, Sparkles, Clock, ArrowLeft, CheckCircle2,
-  AlertTriangle, ShieldCheck, RefreshCw, BarChart2, Award, Zap, ChevronRight, FileCode, Check
+  Bot, User, Send, Mic, MicOff, Code2, Sparkles, Clock, ArrowLeft,
+  CheckCircle2, AlertTriangle, Zap, Award, Volume2, VolumeX, RefreshCw, FileCode, Layers, Radio
 } from 'lucide-react';
 import { interviewAPI } from '../services/api';
 import DashboardNavbar from '../components/DashboardNavbar';
 import MonacoCodeEditor from '../components/MonacoCodeEditor';
 import VoiceInterviewerControls from '../components/VoiceInterviewerControls';
-import ProctoringWidget from '../components/ProctoringWidget';
-
 import SystemDesignWhiteboard from '../components/SystemDesignWhiteboard';
+
+const PERSONA_CONFIG = {
+  Sarah: { name: 'Sarah', badge: 'S', badgeBg: 'bg-emerald-600', type: 'Supportive' },
+  Daniel: { name: 'Daniel', badge: 'D', badgeBg: 'bg-indigo-600', type: 'Corporate' },
+  Fin: { name: 'Fin', badge: 'F', badgeBg: 'bg-teal-600', type: 'Pressure' },
+  Clyde: { name: 'Clyde', badge: 'C', badgeBg: 'bg-rose-600', type: 'Probing' },
+};
 
 export default function InterviewPage() {
   const { sessionId } = useParams();
@@ -25,20 +30,39 @@ export default function InterviewPage() {
 
   // Input states
   const [answerText, setAnswerText] = useState('');
-  const [activeTab, setActiveTab] = useState('text'); // 'text' | 'code' | 'system_design'
+  const [activeTab, setActiveTab] = useState('voice'); // 'voice' | 'text' | 'code' | 'system_design'
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
+
+  // Hands-Free Auto Voice Loop State
+  const [autoVoiceMode, setAutoVoiceMode] = useState(true);
 
   // AI Micro-Hint Drawer state
   const [hintLevel, setHintLevel] = useState(0);
   const [currentHint, setCurrentHint] = useState(null);
   const [fetchingHint, setFetchingHint] = useState(false);
 
-  // Voice recording & Silence Nudge Timer state
+  // Voice recording & Silence Auto-Submit Timer state
   const [isListening, setIsListening] = useState(false);
-  const [silenceNudge, setSilenceNudge] = useState(false);
   const recognitionRef = useRef(null);
-  const silenceTimerRef = useRef(null);
+  const baseTextRef = useRef('');
+  const latestAnswerRef = useRef('');
+  const autoSubmitTimerRef = useRef(null);
+  const autoVoiceModeRef = useRef(true);
+  const submittingRef = useRef(false);
+
+  // Keep refs synced
+  useEffect(() => {
+    latestAnswerRef.current = answerText;
+  }, [answerText]);
+
+  useEffect(() => {
+    autoVoiceModeRef.current = autoVoiceMode;
+  }, [autoVoiceMode]);
+
+  useEffect(() => {
+    submittingRef.current = submitting;
+  }, [submitting]);
 
   // Session timer
   const [secondsElapsed, setSecondsElapsed] = useState(0);
@@ -62,50 +86,7 @@ export default function InterviewPage() {
     loadSession();
   }, [sessionId]);
 
-  // Silence Nudge Timer (Triggers audio nudge if user is quiet for 10s during answer drafting)
-  useEffect(() => {
-    if (session && session.status === 'active' && !submitting) {
-      silenceTimerRef.current = setTimeout(() => {
-        setSilenceNudge(true);
-      }, 12000);
-    }
-    return () => clearTimeout(silenceTimerRef.current);
-  }, [session, answerText, codeSnippet, submitting]);
-
-  // Request AI Micro-Hint
-  const handleRequestHint = async () => {
-    setFetchingHint(true);
-    const nextLevel = Math.min(3, hintLevel + 1);
-
-    try {
-      const res = await interviewAPI.getAiHint(sessionId, codeSnippet || answerText, nextLevel);
-      setHintLevel(nextLevel);
-      setCurrentHint(res.hint);
-    } catch (err) {
-      // Fallback micro-hint if API offline
-      setHintLevel(nextLevel);
-      const hints = [
-        "Focus on reducing nested loops. Can a Hash Map optimize lookups to O(1)?",
-        "Consider using a Two-Pointer strategy or Sliding Window for space optimization.",
-        "Pseudocode: Maintain map[value] = index. Check if target - val exists in map."
-      ];
-      setCurrentHint(hints[nextLevel - 1] || hints[0]);
-    } finally {
-      setFetchingHint(false);
-    }
-  };
-
-  // Session timer ticker
-  useEffect(() => {
-    if (session && session.status === 'active' && !summary) {
-      const timer = setInterval(() => {
-        setSecondsElapsed((prev) => prev + 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [session, summary]);
-
-  // Auto-scroll chat stream to bottom
+  // Auto-scroll chat transcript stream to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [session?.messages]);
@@ -120,18 +101,41 @@ export default function InterviewPage() {
       recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          if (result.isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
         }
-        if (currentTranscript.trim()) {
-          setAnswerText((prev) => (prev ? prev + ' ' + currentTranscript : currentTranscript));
+
+        const baseline = baseTextRef.current ? baseTextRef.current.trim() : '';
+        const spoken = (finalTranscript + interimTranscript).trim();
+        const combined = baseline ? (spoken ? baseline + ' ' + spoken : baseline) : spoken;
+
+        setAnswerText(combined);
+
+        // Hands-free Silence Auto-Submit Timer (Triggers submit after 2.2s of silence post-speech)
+        if (autoVoiceModeRef.current && spoken.length > 5 && !submittingRef.current) {
+          if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+          autoSubmitTimerRef.current = setTimeout(() => {
+            if (latestAnswerRef.current && latestAnswerRef.current.trim().length > 3) {
+              handleSendAnswerAuto();
+            }
+          }, 2200);
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        setIsListening(false);
+        if (event.error !== 'no-speech') {
+          setIsListening(false);
+        }
       };
 
       recognition.onend = () => {
@@ -140,7 +144,57 @@ export default function InterviewPage() {
 
       recognitionRef.current = recognition;
     }
+
+    return () => {
+      if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+    };
   }, []);
+
+  // Session timer ticker
+  useEffect(() => {
+    if (session && session.status === 'active' && !summary) {
+      const timer = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [session, summary]);
+
+  // Hands-free Auto-Listen when new AI Question arrives
+  useEffect(() => {
+    if (session && autoVoiceMode && activeTab === 'voice' && !submitting) {
+      const lastMsg = session.messages[session.messages.length - 1];
+      if (lastMsg && lastMsg.sender === 'interviewer') {
+        const timer = setTimeout(() => {
+          if (!isListening && recognitionRef.current) {
+            startListening();
+          }
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [session?.messages, autoVoiceMode, activeTab]);
+
+  function startListening() {
+    if (!recognitionRef.current) return;
+    baseTextRef.current = answerText;
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (err) {
+      // ignore if already active
+    }
+  }
+
+  function stopListening() {
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.stop();
+    } catch (err) {
+      // ignore
+    }
+    setIsListening(false);
+  }
 
   function toggleVoiceRecording() {
     if (!recognitionRef.current) {
@@ -148,23 +202,35 @@ export default function InterviewPage() {
       return;
     }
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
+      stopListening();
     } else {
-      recognitionRef.current.start();
-      setIsListening(true);
+      startListening();
     }
+  }
+
+  async function handleSendAnswerAuto() {
+    if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+    const currAns = latestAnswerRef.current;
+    if (!currAns.trim() && !codeSnippet.trim()) return;
+    await executeSubmit(currAns);
   }
 
   async function handleSendAnswer(e) {
     if (e) e.preventDefault();
+    if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
     if (!answerText.trim() && !codeSnippet.trim()) return;
+    await executeSubmit(answerText);
+  }
+
+  async function executeSubmit(textToSend) {
+    stopListening();
+    baseTextRef.current = '';
 
     setSubmitting(true);
     try {
       const updatedSession = await interviewAPI.submitAnswer(
         sessionId,
-        answerText,
+        textToSend,
         codeSnippet ? codeSnippet : null,
         codeSnippet ? codeLanguage : null
       );
@@ -173,7 +239,6 @@ export default function InterviewPage() {
       setCodeSnippet('');
     } catch (err) {
       console.error('Failed to submit answer:', err);
-      alert(err.message || 'Failed to submit answer');
     } finally {
       setSubmitting(false);
     }
@@ -195,17 +260,19 @@ export default function InterviewPage() {
   }
 
   const formatTimer = (totalSec) => {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
+    const totalDurationSec = 30 * 60;
+    const rem = Math.max(0, totalDurationSec - totalSec);
+    const mins = Math.floor(rem / 60);
+    const secs = rem % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-slate-600 font-mono text-sm">
+      <div className="min-h-screen bg-[#07090e] flex items-center justify-center text-slate-400 font-mono text-sm">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <span>Entering Adaptive AI Interview Console...</span>
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span>Entering Intervue Live Room...</span>
         </div>
       </div>
     );
@@ -213,12 +280,12 @@ export default function InterviewPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center text-slate-800 p-6 space-y-4 font-sans">
+      <div className="min-h-screen bg-[#07090e] flex flex-col items-center justify-center text-white p-6 space-y-4 font-sans">
         <AlertTriangle className="w-12 h-12 text-rose-500" />
         <h2 className="text-xl font-bold">Interview Session Not Found</h2>
         <button
           onClick={() => navigate('/dashboard')}
-          className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm transition-colors shadow-lg"
+          className="px-5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm transition-colors shadow-lg"
         >
           Return to Dashboard
         </button>
@@ -226,293 +293,155 @@ export default function InterviewPage() {
     );
   }
 
+  const activePersonaName = session.persona || 'Sarah';
+  const persona = PERSONA_CONFIG[activePersonaName] || PERSONA_CONFIG.Sarah;
+  const latestMessage = session?.messages?.filter((m) => m.sender === 'interviewer').slice(-1)[0]?.content;
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col w-full font-sans overflow-x-hidden">
-      <DashboardNavbar />
+    <div className="min-h-screen bg-[#07090e] text-white flex flex-col w-full font-sans overflow-hidden select-none">
+      
+      {/* Top Header Bar (Intervue Style) */}
+      <div className="h-14 bg-[#0a0d14] border-b border-slate-800/80 px-6 flex items-center justify-between text-xs font-mono">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 font-bold text-white tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Intervue</span>
+          </div>
+          <span className="text-slate-600">/</span>
+          <span className="text-slate-400 font-bold">{session.track_title}</span>
+        </div>
 
-      {/* Main Console Workspace */}
-      <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-6">
+        {/* Live Audio Auto-readout Controller */}
+        <VoiceInterviewerControls latestInterviewerMessage={latestMessage} />
 
-        {/* Live Session Header */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xl shadow-slate-200/50 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors border border-slate-200 cursor-pointer"
-              title="Back to Dashboard"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
-                  {session.track_title}
-                </span>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-200 font-semibold">
-                  Role: {session.target_role}
-                </span>
-              </div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 mt-1 flex items-center gap-2">
-                Adaptive AI Room <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-              </h1>
-            </div>
+        <div className="flex items-center gap-4">
+          {/* Hands-Free Auto Voice Mode Toggle */}
+          <button
+            onClick={() => setAutoVoiceMode(!autoVoiceMode)}
+            className={`px-3 py-1 rounded-full text-[11px] font-mono font-bold border transition-colors flex items-center gap-1.5 cursor-pointer ${
+              autoVoiceMode
+                ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300'
+                : 'bg-slate-900 border-slate-800 text-slate-500'
+            }`}
+          >
+            <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+            <span>Hands-Free Voice: {autoVoiceMode ? 'ON' : 'OFF'}</span>
+          </button>
+
+          <div className="flex items-center gap-2 text-slate-400 font-mono">
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{formatTimer(secondsElapsed)}</span>
           </div>
 
-          {/* Candidate Personalization & ATS Match Context Pills */}
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex flex-col text-right">
-              <div className="text-xs font-bold text-slate-800">
-                Candidate: <span className="text-indigo-600">{session.candidate_name || 'Khushal Kumar'}</span>
-              </div>
-              <div className="text-[11px] text-slate-500 font-mono">
-                ATS Match: <span className="text-emerald-600 font-bold">{session.ats_match_percentage || 88}%</span>
-              </div>
-            </div>
-
-            <div className="text-xs font-mono text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-2 font-bold">
-              <Clock className="w-4 h-4 text-indigo-600" />
-              <span>{formatTimer(secondsElapsed)}</span>
-            </div>
-          </div>
-
-          {/* Center Status Controls */}
-          <div className="flex flex-wrap items-center gap-4">
-            {/* AI Voice Readout Controls */}
-            <VoiceInterviewerControls
-              latestInterviewerMessage={session?.messages?.filter(m => m.sender === 'interviewer').slice(-1)[0]?.content}
-            />
-
-            {/* Timer */}
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 text-xs font-mono font-semibold">
-              <Clock className="w-4 h-4 text-indigo-600" />
-              <span>{formatTimer(secondsElapsed)}</span>
-            </div>
-
-            {/* Current Difficulty Level */}
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold">
-              <Zap className="w-4 h-4 text-indigo-600 animate-pulse" />
-              <span className="text-slate-500">Difficulty:</span>
-              <span className={`font-mono ${
-                session.current_difficulty === 'Advanced' ? 'text-rose-600' :
-                session.current_difficulty === 'Hard' ? 'text-purple-600' :
-                session.current_difficulty === 'Medium' ? 'text-indigo-600' : 'text-emerald-600'
-              }`}>
-                {session.current_difficulty}
-              </span>
-            </div>
-          </div>
-
-          {/* End Session CTA */}
           <button
             onClick={handleFinishInterview}
-            disabled={ending || summary}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 via-rose-600 to-indigo-600 hover:from-rose-600 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-500/20 flex items-center gap-2 disabled:opacity-50 transition-all hover:scale-[1.02] cursor-pointer"
+            disabled={ending}
+            className="text-[11px] font-mono font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors cursor-pointer"
           >
-            {ending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Evaluating...</span>
-              </>
-            ) : (
-              <>
-                <Award className="w-4 h-4" />
-                <span>Finish Session & Scorecard</span>
-              </>
-            )}
+            {ending ? 'ENDING...' : 'END SESSION'}
           </button>
         </div>
+      </div>
 
-        {/* Main Conversation Stream */}
-        <div className="flex-grow min-h-[420px] max-h-[560px] overflow-y-auto p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-6 scrollbar-thin scrollbar-thumb-slate-300">
-          {session.messages.map((msg) => {
-            const isAI = msg.sender === 'interviewer';
-            return (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex items-start gap-4 ${isAI ? 'justify-start' : 'justify-end'}`}
-              >
-                {isAI && (
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-500 p-0.5 shrink-0 shadow-md shadow-indigo-500/20">
-                    <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center text-indigo-600">
-                      <Bot className="w-5 h-5" />
-                    </div>
-                  </div>
-                )}
+      {/* Main Grid Layout */}
+      <div className="flex-grow grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        
+        {/* Left Side: Audio Waveform Room & Canvas */}
+        <div className="lg:col-span-8 p-6 flex flex-col justify-between items-center relative bg-[#07090e]">
+          
+          {/* Top Switcher Tabs */}
+          <div className="flex items-center gap-2 p-1 bg-[#0d1117] rounded-xl border border-slate-800 z-10">
+            <button
+              onClick={() => setActiveTab('voice')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'voice' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Voice Room</span>
+            </button>
 
-                <div className={`max-w-3xl space-y-2 ${isAI ? 'text-left' : 'text-right'}`}>
-                  {/* Message Metadata */}
-                  <div className={`flex items-center gap-2 text-[11px] text-slate-500 ${isAI ? '' : 'justify-end'}`}>
-                    <span className="font-semibold text-slate-800">{isAI ? 'AI Technical Interviewer' : 'Candidate (You)'}</span>
-                    <span>•</span>
-                    <span>{msg.timestamp}</span>
-                    {msg.difficulty && (
-                      <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700 font-mono text-[10px]">
-                        Level: {msg.difficulty}
-                      </span>
-                    )}
-                  </div>
+            <button
+              onClick={() => setActiveTab('code')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'code' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Code2 className="w-3.5 h-3.5" />
+              <span>Monaco Code IDE</span>
+            </button>
 
-                  {/* Message Bubble */}
-                  <div
-                    className={`p-5 rounded-2xl text-sm leading-relaxed ${
-                      isAI
-                        ? 'bg-slate-50 border border-slate-200/90 text-slate-900 rounded-tl-none shadow-xs'
-                        : 'bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white font-medium rounded-tr-none shadow-lg shadow-indigo-500/15'
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-
-                    {/* Code Snippet Attachment if present */}
-                    {msg.code_snippet && (
-                      <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left font-mono text-xs overflow-x-auto text-emerald-400">
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase tracking-wider mb-2 pb-2 border-b border-slate-800">
-                          <span className="flex items-center gap-1.5 text-slate-300">
-                            <Code2 className="w-3.5 h-3.5 text-indigo-400" />
-                            {msg.code_language || 'code'}
-                          </span>
-                          <span>Submitted Code</span>
-                        </div>
-                        <pre><code>{msg.code_snippet}</code></pre>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {!isAI && (
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-500 p-0.5 shrink-0 shadow-md shadow-indigo-500/20">
-                    <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center text-indigo-600 font-bold">
-                      <User className="w-5 h-5" />
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-          <div ref={chatEndRef} />
-        </div>
-
-        {/* Dynamic Candidate Input Console */}
-        <div className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-4">
-
-          {/* Input Type Selector Tabs */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 p-1 bg-slate-100/80 rounded-xl border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setActiveTab('text')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'text'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Text Explanation</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('code')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'code'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Code2 className="w-3.5 h-3.5" />
-                <span>Code Editor</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('system_design')}
-                className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'system_design'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                <span>System Design Canvas</span>
-              </button>
-            </div>
-
-            {/* AI Micro-Hint & Voice Silence Nudge Controls */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleRequestHint}
-                disabled={fetchingHint}
-                className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{fetchingHint ? 'Fetching...' : `Get AI Hint (${hintLevel}/3)`}</span>
-              </button>
-
-              {/* Voice Input Web Speech API toggle */}
-              <button
-                type="button"
-                onClick={toggleVoiceRecording}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
-                  isListening
-                    ? 'bg-rose-50 border-rose-300 text-rose-600 animate-pulse'
-                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900'
-                }`}
-              >
-                {isListening ? <MicOff className="w-4 h-4 text-rose-600" /> : <Mic className="w-4 h-4 text-indigo-600" />}
-                <span>{isListening ? 'Recording...' : 'Voice-to-Text'}</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('system_design')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'system_design' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>System Design</span>
+            </button>
           </div>
 
-          {/* AI Hint Popup Box if unlocked */}
-          {currentHint && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-3.5 rounded-2xl bg-indigo-950 text-indigo-100 border border-indigo-500/40 text-xs font-mono flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span><strong>AI Hint Level {hintLevel}:</strong> {currentHint}</span>
+          {/* ACTIVE TAB CONTENT */}
+          {activeTab === 'voice' && (
+            <div className="w-full flex-grow flex flex-col items-center justify-center space-y-10 my-auto">
+              
+              {/* INTERVIEW IN PROGRESS Header */}
+              <div className="text-center space-y-1">
+                <div className="text-[11px] font-mono uppercase tracking-widest text-slate-500 font-bold">
+                  INTERVIEW IN PROGRESS
+                </div>
+                <h3 className="text-sm text-slate-400 font-mono">
+                  {isListening ? "• You're speaking..." : "• Interviewer is speaking"}
+                </h3>
               </div>
-              <button onClick={() => setCurrentHint(null)} className="text-slate-400 hover:text-white text-xs font-bold ml-2">✕</button>
-            </motion.div>
-          )}
 
-          {/* Active Tab View */}
-          {activeTab === 'text' ? (
-            <div className="space-y-3">
-              <textarea
-                value={answerText}
-                onChange={(e) => setAnswerText(e.target.value)}
-                placeholder="Type your technical explanation or answer here... (Tip: You can use voice-to-text recording or switch to the Code Editor tab to include snippets!)"
-                rows={4}
-                className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 text-sm font-normal leading-relaxed transition-colors resize-none"
-              />
-
-              {/* Quick Answer Chips */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] text-slate-500 font-mono">Quick Starters:</span>
-                {[
-                  "In terms of time complexity, this approach operates in O(N)...",
-                  "To ensure high availability and horizontal scaling, I would recommend...",
-                  "The main edge cases to consider include null pointer checks and network timeouts..."
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setAnswerText((prev) => (prev ? prev + ' ' + chip : chip))}
-                    className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
-                  >
-                    + {chip.slice(0, 30)}...
-                  </button>
+              {/* Animated Waveform Visualizer */}
+              <div className="flex items-center justify-center gap-1.5 h-20 w-full max-w-md">
+                {[40, 70, 45, 90, 60, 100, 75, 50, 85, 65, 95, 55, 80, 40, 90, 60].map((h, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{
+                      height: isListening ? [`${h * 0.3}%`, `${h}%`, `${h * 0.3}%`] : [`${h * 0.4}%`, `${h * 0.7}%`, `${h * 0.4}%`]
+                    }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      delay: i * 0.05,
+                      ease: 'easeInOut'
+                    }}
+                    className={`w-2 rounded-full ${isListening ? 'bg-cyan-400' : 'bg-emerald-500'}`}
+                  />
                 ))}
               </div>
+
+              {/* Active Persona Pill Card */}
+              <div className="p-3 px-5 rounded-2xl bg-[#0d1117] border border-slate-800/90 flex items-center gap-3 shadow-xl">
+                <div className={`w-8 h-8 rounded-xl ${persona.badgeBg} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                  {persona.badge}
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>AI Interviewer</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    {persona.name} ({persona.type})
+                  </div>
+                </div>
+              </div>
+
+              {/* Spoken Text Live Streaming Preview */}
+              {answerText && (
+                <div className="max-w-lg p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs font-mono text-emerald-300 text-center">
+                  "{answerText}"
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="space-y-3">
+          )}
+
+          {activeTab === 'code' && (
+            <div className="w-full flex-grow py-4">
               <MonacoCodeEditor
                 code={codeSnippet}
                 setCode={setCodeSnippet}
@@ -522,125 +451,89 @@ export default function InterviewPage() {
             </div>
           )}
 
-          {/* Submit CTA */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="text-xs text-slate-500">
-              Pressing Submit will submit your response for AI difficulty evaluation & follow-up generation.
+          {activeTab === 'system_design' && (
+            <div className="w-full flex-grow py-4">
+              <SystemDesignWhiteboard />
             </div>
+          )}
+
+          {/* Bottom Control Bar */}
+          <div className="w-full pt-4 flex items-center justify-center gap-4 border-t border-slate-800/60">
+            <button
+              onClick={toggleVoiceRecording}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold font-mono flex items-center gap-2 border transition-all cursor-pointer ${
+                isListening
+                  ? 'bg-rose-950/60 border-rose-500 text-rose-300 animate-pulse'
+                  : 'bg-[#0d1117] border-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              {isListening ? <MicOff className="w-4 h-4 text-rose-400" /> : <Mic className="w-4 h-4 text-emerald-400" />}
+              <span>{isListening ? 'STOP RECORDING' : 'START SPEECH RECORDING'}</span>
+            </button>
+
+            {(answerText.trim() || codeSnippet.trim()) && (
+              <button
+                onClick={handleSendAnswer}
+                disabled={submitting}
+                className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs font-mono shadow-lg flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+              >
+                {submitting ? 'SENDING...' : 'SUBMIT RESPONSE →'}
+              </button>
+            )}
 
             <button
-              type="button"
-              disabled={submitting || (!answerText.trim() && !codeSnippet.trim())}
-              onClick={handleSendAnswer}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 flex items-center gap-2.5 disabled:opacity-50 transition-all hover:scale-[1.02] cursor-pointer"
+              onClick={handleFinishInterview}
+              disabled={ending}
+              className="px-5 py-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/50 border border-rose-800/60 text-rose-400 font-bold text-xs font-mono cursor-pointer transition-colors"
             >
-              {submitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Evaluating Answer...</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 fill-white" />
-                  <span>Submit Answer</span>
-                </>
-              )}
+              END INTERVIEW
             </button>
           </div>
         </div>
 
-      </div>
-
-      {/* Post-Session Performance Scorecard Modal */}
-      {summary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-2xl bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden text-slate-900"
-          >
-            <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
-
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Interview Session Complete</span>
-              </div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                Performance Scorecard
-              </h2>
-              <p className="text-sm text-slate-500">
-                Track: <span className="text-indigo-600 font-semibold">{summary.track_title}</span> • Role: <span className="text-violet-600 font-semibold">{summary.target_role}</span>
-              </p>
+        {/* Right Side: LIVE TRANSCRIPT Stream */}
+        <div className="lg:col-span-4 bg-[#0a0d14] border-t lg:border-t-0 lg:border-l border-slate-800/80 p-6 flex flex-col justify-between h-full">
+          <div>
+            <div className="text-[11px] font-mono text-slate-500 uppercase tracking-widest font-bold pb-3 border-b border-slate-800/60 flex items-center justify-between">
+              <span>TRANSCRIPT</span>
+              <span className="text-[10px] text-emerald-400 font-normal">HANDS-FREE ACTIVE</span>
             </div>
 
-            {/* Scorecard Hero Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-              <div>
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Overall Score</div>
-                <div className="text-3xl font-black text-indigo-600 mt-1">{summary.overall_score}%</div>
-              </div>
-              <div>
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Tech Accuracy</div>
-                <div className="text-3xl font-black text-violet-600 mt-1">{summary.technical_accuracy}%</div>
-              </div>
-              <div>
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Problem Solving</div>
-                <div className="text-3xl font-black text-purple-600 mt-1">{summary.problem_solving}%</div>
-              </div>
-              <div>
-                <div className="text-[11px] font-mono text-slate-500 uppercase">Communication</div>
-                <div className="text-3xl font-black text-emerald-600 mt-1">{summary.communication}%</div>
-              </div>
-            </div>
+            {/* Scrollable Chat Stream */}
+            <div className="py-4 space-y-4 max-h-[calc(100vh-180px)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+              {session.messages.map((msg) => {
+                const isAI = msg.sender === 'interviewer';
+                return (
+                  <div key={msg.id} className="space-y-1 text-left text-xs leading-relaxed font-sans">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+                      <span className={isAI ? 'text-emerald-400 font-bold' : 'text-cyan-400 font-bold'}>
+                        {isAI ? `[${persona.name}]` : '[YOU]'}
+                      </span>
+                      <span>•</span>
+                      <span>{msg.timestamp}</span>
+                    </div>
 
-            {/* Strengths & Improvement Areas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-2">
-                <div className="font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Check className="w-4 h-4" /> Key Strengths Demonstrated
-                </div>
-                <ul className="space-y-1.5 text-slate-700 list-disc list-inside leading-relaxed">
-                  {summary.strengths.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-2">
-                <div className="font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Zap className="w-4 h-4" /> Key Areas for Improvement
-                </div>
-                <ul className="space-y-1.5 text-slate-700 list-disc list-inside leading-relaxed">
-                  {summary.areas_for_improvement.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+                    <div className={`p-3 rounded-xl ${isAI ? 'bg-slate-900/80 text-slate-200 border border-slate-800/80' : 'bg-emerald-950/40 text-emerald-100 border border-emerald-500/30'}`}>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      {msg.code_snippet && (
+                        <div className="mt-2 p-2 rounded bg-slate-950 font-mono text-[11px] text-emerald-400 overflow-x-auto border border-slate-800">
+                          <code>{msg.code_snippet}</code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={chatEndRef} />
             </div>
+          </div>
 
-            {/* AI Summary Feedback */}
-            <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 text-xs text-slate-700 leading-relaxed">
-              <span className="font-semibold text-indigo-900 block mb-1">AI Evaluator Summary:</span>
-              {summary.overall_feedback}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-transform"
-              >
-                <span>Return to Dashboard</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
+          <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono text-slate-500 text-center">
+            Hands-Free Continuous Voice Loop Enabled • Powered by Intervue Engine
+          </div>
         </div>
-      )}
 
-      {/* Proctoring & Anti-Cheat Widget */}
-      <ProctoringWidget sessionId={sessionId} />
+      </div>
     </div>
   );
 }

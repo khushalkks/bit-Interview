@@ -82,7 +82,10 @@ export const interviewAPI = {
     candidateName = null,
     companyName = null,
     resumeText = null,
-    jdText = null
+    jdText = null,
+    persona = 'Sarah',
+    duration = '30 min',
+    targetLevel = 'Senior SWE'
   ) =>
     apiFetch('/interview/start', {
       method: 'POST',
@@ -94,6 +97,9 @@ export const interviewAPI = {
         company_name: companyName,
         resume_text: resumeText,
         jd_text: jdText,
+        persona,
+        duration,
+        target_level: targetLevel,
       }),
     }),
 

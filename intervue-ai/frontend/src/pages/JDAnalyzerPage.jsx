@@ -6,7 +6,7 @@ import {
   Target, Rocket, ArrowRight, BookOpen, Layers, ShieldCheck, AlertCircle, Copy,
   Check, FileText, BarChart2, Lightbulb, Compass
 } from 'lucide-react';
-import { jdAPI, interviewAPI } from '../services/api';
+import { jdAPI, interviewAPI, resumeAPI } from '../services/api';
 import DashboardNavbar from '../components/DashboardNavbar';
 
 const SAMPLE_JDS = [
@@ -63,10 +63,24 @@ export default function JDAnalyzerPage() {
     if (!analysis) return;
     setLaunchingSession(true);
     try {
+      let userResumeText = null;
+      let candidateName = null;
+      try {
+        const rProfile = await resumeAPI.getMe();
+        if (rProfile?.raw_text) userResumeText = rProfile.raw_text;
+        if (rProfile?.candidate_name) candidateName = rProfile.candidate_name;
+      } catch (rErr) {
+        console.log('No user resume found during JD interview launch:', rErr);
+      }
+
       const session = await interviewAPI.start(
         analysis.recommended_track || 'technical',
         'Medium',
-        `${analysis.company_name} — ${analysis.target_role}`
+        analysis.target_role || targetRole,
+        candidateName,
+        analysis.company_name || companyName,
+        userResumeText,
+        jdText
       );
       navigate(`/interview/${session.session_id}`);
     } catch (err) {

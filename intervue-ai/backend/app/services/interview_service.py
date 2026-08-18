@@ -75,6 +75,9 @@ class InterviewService:
         track: TrackEnum = TrackEnum.TECHNICAL,
         target_role: Optional[str] = "Full Stack Engineer",
         difficulty: DifficultyEnum = DifficultyEnum.MEDIUM,
+        persona: Optional[str] = "Sarah",
+        duration: Optional[str] = "30 min",
+        target_level: Optional[str] = "Senior SWE",
         resume_text: Optional[str] = None,
         jd_text: Optional[str] = None,
         candidate_name: Optional[str] = None,
@@ -84,10 +87,16 @@ class InterviewService:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # 1. Fetch user context & perform ATS Semantic Matching
-        user_resume = RESUMES_DB.get(user_id, {})
-        extracted_resume = resume_text or user_resume.get("raw_text") or "Experienced Senior Software Developer in React, Python, Node.js, and SQL databases."
+        from app.services.resume_service import ResumeService
+        user_resume = ResumeService.get_user_resume(user_id) or RESUMES_DB.get(user_id, {})
+        extracted_resume = (
+            resume_text
+            or user_resume.get("raw_text")
+            or user_resume.get("summary")
+            or "Experienced Senior Software Developer in React, Python, Node.js, and SQL databases."
+        )
         target_jd = jd_text or "Senior Full Stack Engineer position requiring Microservices, Redis Caching, Kafka, System Design, and Python/JavaScript proficiency."
-        c_name = candidate_name or user_resume.get("name") or "Candidate"
+        c_name = candidate_name or user_resume.get("candidate_name") or user_resume.get("name") or "Candidate"
         c_company = company_name or "Target Company"
 
         # Semantic Match extraction
@@ -95,6 +104,10 @@ class InterviewService:
         match_result = SemanticMatcher.calculate_ats_score(extracted_resume, target_jd)
         matched_skills = match_result.get("matched_skills") or ["Python", "JavaScript", "React", "SQL"]
         skill_gaps = match_result.get("missing_skills") or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
+
+        p_name = persona or "Sarah"
+        d_val = duration or "30 min"
+        l_val = target_level or "Senior SWE"
 
         # 2. Instantiate LangGraph Interview State
         state = LangGraphInterviewState(
@@ -104,6 +117,9 @@ class InterviewService:
             initial_difficulty=difficulty.value,
             candidate_name=c_name,
             company_name=c_company,
+            persona=p_name,
+            duration=d_val,
+            target_level=l_val,
             matched_skills=matched_skills,
             skill_gaps=skill_gaps
         )
@@ -121,6 +137,9 @@ class InterviewService:
             "company_name": c_company,
             "status": "active",
             "current_difficulty": difficulty.value,
+            "persona": p_name,
+            "duration": d_val,
+            "target_level": l_val,
             "candidate_name": c_name,
             "matched_skills": matched_skills,
             "skill_gaps": skill_gaps,
@@ -141,6 +160,9 @@ class InterviewService:
             target_role=target_role,
             status="active",
             current_difficulty=difficulty.value,
+            persona=p_name,
+            duration=d_val,
+            target_level=l_val,
             question_count=1,
             started_at=now,
             messages=[first_message]
@@ -267,25 +289,39 @@ class InterviewService:
         interviewer_msgs = [m for m in messages if m.get("sender") == "interviewer"]
         candidate_msgs = [m for m in messages if m.get("sender") == "candidate"]
 
-        # Calculate actual candidate participation
+        # Calculate actual candidate participation & technical keyword density
         total_words = 0
         total_code_len = 0
+        all_candidate_text = []
 
         for cm in candidate_msgs:
             ans = cm.get("content", "")
             code = cm.get("code_snippet", "") or ""
             total_words += len(ans.split())
             total_code_len += len(code.split())
+            if ans:
+                all_candidate_text.append(ans.lower())
+            if code:
+                all_candidate_text.append(code.lower())
 
         num_answers = len(candidate_msgs)
 
-        if num_answers == 0 or total_words + total_code_len == 0:
-            overall_score = 25
-            tech_acc = 20
-            prob_solv = 20
-            comm = 30
-            code_eff = 20
-            arch = 25
+        tech_keywords = [
+            "python", "javascript", "react", "node", "fastapi", "sql", "redis", "kafka", "docker",
+            "microservices", "complexity", "o(1)", "o(n)", "cache", "async", "database", "api",
+            "function", "class", "state", "concurrency", "thread", "latency", "architecture",
+            "index", "query", "design", "structure", "algorithm", "pointer", "hash", "loop"
+        ]
+        full_text = " ".join(all_candidate_text)
+        tech_kw_count = sum(1 for kw in tech_keywords if kw in full_text)
+
+        if num_answers == 0 or (total_words + total_code_len) == 0:
+            overall_score = 15
+            tech_acc = 10
+            prob_solv = 10
+            comm = 20
+            code_eff = 10
+            arch = 15
             strengths = ["Initiated the interview round environment."]
             areas_for_imp = [
                 "No technical answers or code snippets were submitted.",
@@ -304,50 +340,52 @@ class InterviewService:
         else:
             avg_words = (total_words + total_code_len) / num_answers
             
-            if avg_words < 10:
-                overall_score = 45
-                tech_acc = 40
-                prob_solv = 42
-                comm = 50
-                code_eff = 45
-                arch = 40
-                strengths = ["Submitted brief initial thoughts."]
+            if avg_words < 15 or tech_kw_count == 0:
+                overall_score = 35
+                tech_acc = 30
+                prob_solv = 32
+                comm = 40
+                code_eff = 25
+                arch = 30
+                strengths = ["Submitted initial response."]
                 areas_for_imp = [
-                    "Answers were short and lacked technical depth.",
-                    "Elaborate on edge cases, time/space complexity, and architecture trade-offs."
+                    "Answers were extremely brief and lacked technical depth.",
+                    "Missing technical terminology, Big-O complexity analysis, and code implementations."
                 ]
                 recommendations = [
                     "Elaborate on why specific algorithms or datastructures were chosen.",
                     "Always mention Big-O Time complexity and Space complexity analysis.",
                     "Discuss failure modes and error boundaries in real-world scenarios."
                 ]
-                feedback = f"Responses were too brief to evaluate full technical depth. Elaborate with concrete examples and code snippets."
-            elif avg_words < 30:
-                overall_score = 72
-                tech_acc = 70
-                prob_solv = 72
-                comm = 75
-                code_eff = 71
-                arch = 68
+                feedback = f"Responses were too brief (Score: 35%). Elaborate with concrete technical concepts, complexity analysis, and code snippets."
+            elif avg_words < 40:
+                base_s = 50 + min(20, tech_kw_count * 4 + (10 if total_code_len > 15 else 0))
+                overall_score = base_s
+                tech_acc = min(95, overall_score)
+                prob_solv = max(35, overall_score - 2)
+                comm = min(95, overall_score + 3)
+                code_eff = max(30, overall_score - 3 if total_code_len == 0 else overall_score + 2)
+                arch = max(35, overall_score - 1)
                 strengths = [
-                    "Good understanding of fundamental concepts.",
-                    "Used appropriate technical terminology throughout."
+                    "Good foundational understanding of general concepts.",
+                    "Used domain terminology during responses."
                 ]
                 areas_for_imp = [
                     "Deepen technical specificity regarding performance under scale.",
-                    "Include concrete unit test scenarios and error boundaries."
+                    "Include concrete unit test scenarios and code implementations in Monaco Editor."
                 ]
                 recommendations = [
                     "Incorporate system design diagrams or layered architectural patterns.",
                     "Review distributed caching mechanisms (e.g., Redis LRU, Cache-Aside pattern).",
                     "Practice writing clean production-grade code with error boundary handling."
                 ]
-                feedback = f"Solid foundation demonstrated during {session['track_title']}. To break past 85%, expand on architecture trade-offs and edge cases."
+                feedback = f"Fair technical effort (Score: {overall_score}%). To break past 80%, expand on architecture trade-offs, edge cases, and code solutions."
             else:
-                overall_score = min(96, int(78 + (avg_words * 0.35)))
+                base_s = 65 + min(28, tech_kw_count * 4 + (12 if total_code_len > 15 else 0))
+                overall_score = min(96, base_s)
                 tech_acc = min(98, overall_score + 2)
-                prob_solv = min(95, overall_score - 1)
-                comm = min(98, overall_score + 3)
+                prob_solv = min(95, overall_score)
+                comm = min(98, overall_score + 2)
                 code_eff = min(96, overall_score + 1)
                 arch = min(95, overall_score)
                 strengths = [
@@ -364,7 +402,7 @@ class InterviewService:
                     "Conduct peer architectural reviews for complex microservice pipelines.",
                     "Explore advanced query optimization & database indexing strategies."
                 ]
-                feedback = f"Outstanding performance in {session['track_title']}! You demonstrated strong technical confidence and thorough reasoning."
+                feedback = f"Outstanding performance in {session['track_title']} (Score: {overall_score}%)! You demonstrated strong technical confidence and thorough reasoning."
 
         # Build Question-by-Question Analysis
         question_analysis: List[QuestionAnalysisItem] = []
