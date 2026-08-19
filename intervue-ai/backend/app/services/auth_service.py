@@ -7,7 +7,7 @@ from app.core.security import hash_password, verify_password
 # In-memory user database store for initial phases
 USERS_DB: Dict[str, dict] = {}
 
-# Default demo account
+# Default demo accounts
 DEMO_USER_ID = "usr_khushal_demo_01"
 USERS_DB[DEMO_USER_ID] = {
     "id": DEMO_USER_ID,
@@ -15,6 +15,16 @@ USERS_DB[DEMO_USER_ID] = {
     "email": "khushal@example.com",
     "password_hash": hash_password("password123"),
     "target_role": "Full Stack Engineer",
+    "created_at": datetime.now().isoformat()
+}
+
+RECRUITER_USER_ID = "usr_recruiter_demo_02"
+USERS_DB[RECRUITER_USER_ID] = {
+    "id": RECRUITER_USER_ID,
+    "name": "Sarah Jenkins",
+    "email": "recruiter@example.com",
+    "password_hash": hash_password("password123"),
+    "target_role": "Technical Recruiter / HR",
     "created_at": datetime.now().isoformat()
 }
 

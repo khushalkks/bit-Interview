@@ -202,19 +202,23 @@ class InterviewService:
         # Interruption check node (Silence / Ramble / Vague responses)
         interruption = LangGraphAdaptiveAgent.execute_interruption_check_node(answer_text)
         
-        # Reconstruct LangGraph State from Session DB
+        # Reconstruct LangGraph State from Session DB using from_dict to preserve stage & topics_covered
         lg_dict = session.get("langgraph_state", {})
-        state = LangGraphInterviewState(
-            session_id=session_id,
-            track=session["track"],
-            target_role=session["target_role"],
-            initial_difficulty=current_diff,
-            candidate_name=session.get("candidate_name", "Candidate"),
-            company_name=session.get("company_name", "Target Company"),
-            matched_skills=session.get("matched_skills"),
-            skill_gaps=session.get("skill_gaps")
-        )
-        state.step_index = session["question_count"]
+        if lg_dict:
+            state = LangGraphInterviewState.from_dict(lg_dict)
+            state.current_difficulty = current_diff
+        else:
+            state = LangGraphInterviewState(
+                session_id=session_id,
+                track=session["track"],
+                target_role=session["target_role"],
+                initial_difficulty=current_diff,
+                candidate_name=session.get("candidate_name", "Candidate"),
+                company_name=session.get("company_name", "Target Company"),
+                matched_skills=session.get("matched_skills"),
+                skill_gaps=session.get("skill_gaps")
+            )
+            state.step_index = session["question_count"]
 
         # Evaluator Node execution
         eval_result = LangGraphAdaptiveAgent.execute_evaluator_node(state, answer_text, code_snippet)
@@ -229,7 +233,7 @@ class InterviewService:
 
         session["current_difficulty"] = next_diff.value
 
-        # 3. Generate Next Question based on Stage Progression (Icebreaker -> Resume -> JD Gap -> Coding)
+        # 3. Generate Next Question based on Stage Progression & Candidate Response
         if interruption:
             follow_up_text = f"{interruption['interviewer_prompt']}\n\nCan you summarize your core approach in 2-3 concise bullet points?"
             ai_msg_dict = {
@@ -242,7 +246,7 @@ class InterviewService:
             }
             session["question_count"] += 1
         else:
-            ai_msg_dict = LangGraphAdaptiveAgent.execute_question_node(state)
+            ai_msg_dict = LangGraphAdaptiveAgent.execute_question_node(state, candidate_last_answer=answer_text)
             ai_msg_dict["content"] = f"**Feedback on your response**: {eval_hint}\n\n{ai_msg_dict['content']}"
             session["question_count"] = state.step_index
 

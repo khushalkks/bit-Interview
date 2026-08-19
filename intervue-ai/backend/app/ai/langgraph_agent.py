@@ -1,4 +1,6 @@
 import uuid
+import os
+import httpx
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -17,7 +19,7 @@ class LangGraphInterviewState:
         self.matched_skills = matched_skills or ["Python", "JavaScript", "React", "REST APIs"]
         self.skill_gaps = skill_gaps or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
         self.step_index = 0
-        self.stage = "ICEBREAKER" # ICEBREAKER -> RESUME_DEEP_DIVE -> JD_SKILL_GAPS -> TECHNICAL_CODING
+        self.stage = "ICEBREAKER" # ICEBREAKER -> INTRO -> RESUME_DEEP_DIVE -> JD_SKILL_GAPS -> TECHNICAL_CODING -> ADAPTIVE_FOLLOWUP
         self.messages: List[dict] = []
         self.evaluations: List[dict] = []
         self.topics_covered: List[str] = []
@@ -48,11 +50,36 @@ class LangGraphInterviewState:
             "interruption_count": self.interruption_count
         }
 
+    @classmethod
+    def from_dict(cls, data: dict):
+        state = cls(
+            session_id=data.get("session_id", ""),
+            track=data.get("track", "technical"),
+            target_role=data.get("target_role", "Full Stack Engineer"),
+            initial_difficulty=data.get("current_difficulty", "Medium"),
+            candidate_name=data.get("candidate_name", "Candidate"),
+            company_name=data.get("company_name", "Target Company"),
+            matched_skills=data.get("matched_skills"),
+            skill_gaps=data.get("skill_gaps"),
+            persona=data.get("persona", "Sarah"),
+            duration=data.get("duration", "30 min"),
+            target_level=data.get("target_level", "Senior SWE")
+        )
+        state.step_index = data.get("step_index", 0)
+        state.stage = data.get("stage", "ICEBREAKER")
+        state.messages = data.get("messages", [])
+        state.evaluations = data.get("evaluations", [])
+        state.topics_covered = data.get("topics_covered", [])
+        state.weak_topics = data.get("weak_topics", [])
+        state.strong_topics = data.get("strong_topics", [])
+        state.interruption_count = data.get("interruption_count", 0)
+        return state
+
 class LangGraphAdaptiveAgent:
     """
     Agentic Workflow Graph implementing LangGraph-style state machine transitions
     Nodes:
-      1. QuestionGeneratorNode (Icebreaker -> Resume Projects -> JD Gaps -> Coding)
+      1. QuestionGeneratorNode (Intro -> Resume Projects -> Adaptive Follow-Ups -> Coding)
       2. CandidateResponseNode
       3. InterruptionCheckNode (Silence/Ramble/Vague Interruption Loop)
       4. EvaluatorNode (Technical Accuracy & Complexity Scoring)
@@ -62,7 +89,85 @@ class LangGraphAdaptiveAgent:
     """
 
     @staticmethod
-    def execute_question_node(state: LangGraphInterviewState, candidate_skills: List[str] = None) -> dict:
+    def _generate_llm_adaptive_question(state: LangGraphInterviewState, candidate_last_answer: str = "") -> Optional[str]:
+        """Call LLM API (Gemini or OpenAI) to generate a 100% dynamic, context-aware follow-up question."""
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        openai_key = os.getenv("OPENAI_API_KEY")
+
+        if not gemini_key and not openai_key:
+            return None
+
+        # Build prompt with conversation context
+        messages_summary = []
+        for m in state.messages[-6:]:
+            sender = m.get("sender", "interviewer")
+            content = m.get("content", "")
+            if sender and content:
+                messages_summary.append(f"{sender.capitalize()}: {content[:250]}")
+        
+        chat_history = "\n".join(messages_summary)
+        already_asked = "; ".join(state.topics_covered[-5:]) if state.topics_covered else "None"
+        
+        prompt = f"""You are an expert AI technical interviewer named {state.persona} conducting a {state.track} interview round for a {state.target_role} ({state.target_level}) position at {state.company_name}.
+Candidate Name: {state.candidate_name}
+Target Role: {state.target_role}
+Current Difficulty Level: {state.current_difficulty}
+Candidate Resume Skills: {', '.join(state.matched_skills[:5])}
+Skill Gaps to test: {', '.join(state.skill_gaps[:3])}
+
+Topics / Questions Already Covered (DO NOT REPEAT):
+{already_asked}
+
+Recent Conversation Transcript:
+{chat_history}
+
+Candidate's Latest Response:
+"{candidate_last_answer}"
+
+REQUIREMENTS FOR YOUR NEXT QUESTION:
+1. Provide a brief 1-sentence acknowledgment of their latest answer.
+2. Formulate ONE clear, highly specific follow-up question.
+3. If this is step 1 after candidate intro, ask them about a technical project on their resume or core architectural experience.
+4. If candidate mentioned a specific technology (e.g. React, Python, PostgreSQL, Microservices), probe into trade-offs, edge cases, failure modes, or performance tuning.
+5. NEVER repeat any question already asked in the conversation.
+6. Keep tone professional, engaging, and concise (2-4 sentences total).
+
+Return ONLY the response text."""
+
+        # Try Gemini API if key is present
+        if gemini_key and gemini_key != "your_gemini_api_key_here":
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=gemini_key)
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    return response.text.strip()
+            except Exception as e:
+                print(f"[AI Agent] Gemini API call skipped/failed: {e}")
+
+        # Try OpenAI API if key is present
+        if openai_key and openai_key != "your_openai_api_key_here":
+            try:
+                url = "https://api.openai.com/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 300,
+                    "temperature": 0.7
+                }
+                res = httpx.post(url, headers=headers, json=payload, timeout=8.0)
+                if res.status_code == 200:
+                    data = res.json()
+                    return data["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"[AI Agent] OpenAI API call skipped/failed: {e}")
+
+        return None
+
+    @staticmethod
+    def execute_question_node(state: LangGraphInterviewState, candidate_last_answer: str = "") -> dict:
         """Node 1: Tailored Question Generator Node using Candidate Resume + Track + Persona State"""
         track = state.track
         role = state.target_role
@@ -82,92 +187,107 @@ class LangGraphAdaptiveAgent:
         # Persona tone prefixes
         persona_openers = {
             "Sarah": f"Hello {name}! I'm Sarah. I'm excited to dive into your background today.",
-            "Daniel": f"Good day {name}. I'm Daniel. We'll be conducting a structured assessment.",
-            "Fin": f"Alright {name}, I'm Fin. Let's jump straight to business.",
+            "Daniel": f"Good day {name}. I'm Daniel. We'll be conducting a structured assessment today.",
+            "Fin": f"Alright {name}, I'm Fin. Let's jump straight into business.",
             "Clyde": f"Welcome {name}. I'm Clyde. I'll be scrutinizing your technical claims today."
         }
         opener = persona_openers.get(persona, f"Hello {name}!")
 
-        # Format-specific question generation (Behavioral vs Technical vs Resume Deep Dive)
-        if track == "behavioral":
-            if step == 0:
-                state.stage = "BEHAVIORAL_INTRO"
-                question_text = (
-                    f"{opener} Welcome to your Behavioral Interview round for {role} at {company}.\n\n"
-                    f"To begin, please introduce yourself and share a situation where you took ownership of a critical, ambiguous engineering project."
-                )
-            elif step == 1:
-                state.stage = "STAR_CONFLICT_RESOLUTION"
-                question_text = (
-                    f"Using the **STAR method** (Situation, Task, Action, Result):\n\n"
-                    f"Describe a situation where you had a major technical disagreement with a team member or product manager regarding system architecture. How did you resolve it?"
-                )
-            elif step == 2:
-                state.stage = "STAR_PRODUCTION_INCIDENT"
-                question_text = (
-                    f"Describe a high-pressure production incident or outage that occurred right before a key release.\n\n"
-                    f"What immediate triage actions did you take, how did you communicate under pressure, and what root-cause fix was implemented?"
-                )
-            else:
-                state.stage = "STAR_LEADERSHIP_TRADEOFF"
-                question_text = (
-                    f"Share an example where you had to compromise on technical quality to meet a strict business deadline.\n\n"
-                    f"What technical debt was introduced, and how did you manage its refactoring later?"
-                )
+        question_text = ""
 
-        elif track == "resume_deep_dive" or "resume" in track.lower():
-            if step == 0:
-                state.stage = "RESUME_PROJECT_PROBE"
-                question_text = (
-                    f"{opener} I've thoroughly analyzed your CV for the {role} track at {company}.\n\n"
-                    f"I see strong hands-on experience in **{top_skill}**, **{second_skill}**, and **{third_skill}**. "
-                    f"Could you walk me through the architecture and technical highlights of your primary production project built with **{top_skill}**?"
-                )
-            elif step == 1:
-                state.stage = "RESUME_BOTTLENECK_PROBE"
-                question_text = (
-                    f"Digging deeper into your resume experience with **{top_skill}** and **{second_skill}**:\n\n"
-                    f"What was the most challenging performance or asynchronous I/O bottleneck you encountered in that system, and how did you measure and resolve it?"
-                )
-            elif step == 2:
-                state.stage = "RESUME_FAULT_TOLERANCE"
-                question_text = (
-                    f"Looking at your profile's focus on **{second_skill}**:\n\n"
-                    f"How did you implement error boundaries, data caching, and graceful fallback mechanisms under high concurrent user traffic?"
-                )
-            else:
-                state.stage = "RESUME_REARCHITECTURE_CHALLENGE"
-                question_text = (
-                    f"If you were tasked with re-architecting your **{top_skill}** project today to handle 100x traffic volume, "
-                    f"how would you integrate **{gap_skill}** to eliminate single points of failure?"
-                )
+        # STEP 0: ALWAYS START WITH CANDIDATE INTRODUCTION FOR ALL TRACKS ("Phele introduce karega")
+        if step == 0:
+            state.stage = "INTRO"
+            track_name = track.replace("_", " ").title()
+            question_text = (
+                f"{opener} Welcome to your **{track_name}** round for the **{role}** position at **{company}**.\n\n"
+                f"To get started, please introduce yourself! Give me a brief summary of your technical background, "
+                f"and highlight 1-2 major projects or engineering challenges you've recently worked on."
+            )
 
-        else: # Default Technical Round
-            if step == 0:
-                state.stage = "ICEBREAKER"
-                question_text = (
-                    f"{opener} Welcome to your Technical Deep-Dive round for {role} at {company}.\n\n"
-                    f"I reviewed your profile highlighting expertise in **{top_skill}** and **{second_skill}**. "
-                    f"To kick off, please briefly introduce yourself and highlight a complex engineering feature you delivered using {top_skill}."
-                )
-            elif step == 1:
-                state.stage = "RESUME_DEEP_DIVE"
-                question_text = (
-                    f"Thanks! Digging deeper into **{top_skill}**:\n\n"
-                    f"When designing systems with {top_skill}, how do you manage memory footprint, garbage collection, and async I/O bottlenecks under heavy load?"
-                )
-            elif step == 2:
-                state.stage = "JD_SKILL_GAPS"
-                question_text = (
-                    f"Looking at high-scale requirements for **{role}**, one key technology expected is **{gap_skill}**.\n\n"
-                    f"What is your architectural intuition regarding {gap_skill}? How would you design fault tolerance and cache eviction for it?"
-                )
+        # STEP 1: FOLLOW UP ON INTRODUCTION & RESUME PROJECTS
+        elif step == 1:
+            state.stage = "RESUME_INTRO_FOLLOWUP"
+            question_text = (
+                f"Thank you for that introduction, {name}! Based on your background with **{top_skill}** and **{second_skill}**:\n\n"
+                f"Could you walk me through the overall architecture of a key production system you built with **{top_skill}**? "
+                f"What core technical decisions, trade-offs, or database choices did you make during its design?"
+            )
+
+        # STEP 2+: ADAPTIVE DYNAMIC FOLLOW-UPS (LLM or Context-Aware Fallback Engine)
+        else:
+            # 1. Attempt LLM generation
+            llm_question = LangGraphAdaptiveAgent._generate_llm_adaptive_question(state, candidate_last_answer)
+            
+            if llm_question:
+                state.stage = "ADAPTIVE_LLM_QUESTION"
+                question_text = llm_question
             else:
-                state.stage = "TECHNICAL_CODING"
-                question_text = (
-                    f"Coding Challenge for {role}: Implement an LRU Cache data structure supporting get(key) and put(key, value) in O(1) time. "
-                    f"Switch to the Monaco Code Editor tab to write your solution."
-                )
+                # 2. Dynamic Fallback Question Pool (Ensuring NO duplicate question is EVER repeated)
+                state.stage = f"ADAPTIVE_STEP_{step}"
+                
+                # Check candidate's answer text for keyword triggers
+                ans_lower = (candidate_last_answer or "").lower()
+
+                # Topic pools
+                topic_options = []
+
+                if "database" in ans_lower or "sql" in ans_lower or "postgres" in ans_lower or "mongo" in ans_lower:
+                    topic_options.append((
+                        "database_indexing",
+                        f"You mentioned working with database layers. When scaling read queries under high volume, "
+                        f"how do you design B-Tree or Composite Indexes in your database, and how do you detect and fix slow un-indexed queries?"
+                    ))
+                    topic_options.append((
+                        "database_transactions",
+                        f"In distributed backend services, how do you handle database transaction isolation levels, "
+                        f"and what strategies (like optimistic vs pessimistic locking) do you use to prevent race conditions?"
+                    ))
+
+                if "async" in ans_lower or "event" in ans_lower or "api" in ans_lower or "microservice" in ans_lower:
+                    topic_options.append((
+                        "async_concurrency",
+                        f"Digging into asynchronous I/O and microservices: How do you handle non-blocking event loops and CPU-bound thread pool starvation when processing high-burst background tasks?"
+                    ))
+                    topic_options.append((
+                        "api_rate_limiting",
+                        f"To protect your downstream services from thundering herd attacks or API abuse, how would you implement a Token Bucket or Leaky Bucket rate limiter using Redis?"
+                    ))
+
+                if track == "behavioral":
+                    topic_options.extend([
+                        ("star_conflict", f"Using the **STAR method** (Situation, Task, Action, Result): Describe a situation where you had a strong disagreement with a team member over system architecture or code quality. How did you handle it and build alignment?"),
+                        ("star_outage", f"Tell me about a high-stress production outage or P0 incident you managed. What immediate steps did you take to triage the bug, communicate with stakeholders, and prevent recurrence?"),
+                        ("star_tech_debt", f"Describe a project where you had to compromise on technical debt to meet a tight deadline. How did you plan the refactoring later?")
+                    ])
+                elif track == "system_design" or "system" in track:
+                    topic_options.extend([
+                        ("design_caching", f"When designing high-throughput distributed systems, how do you structure your caching strategy (Cache-Aside vs Read-Through) and handle cache invalidation and stampede issues using **{gap_skill}**?"),
+                        ("design_sharding", f"If write traffic scales 50x beyond single-database limits, how would you approach horizontal database sharding and cross-shard querying?"),
+                        ("design_monitoring", f"How do you instrument distributed tracing (OpenTelemetry) and p99 latency alerts to detect bottlenecks across microservices?")
+                    ])
+                else: # Technical / Resume Deep Dive
+                    topic_options.extend([
+                        ("tech_performance_tuning", f"Following up on your system architecture: What profiling tools or metrics do you inspect when diagnosing memory leaks, garbage collection spikes, or high latency in **{top_skill}** applications?"),
+                        ("tech_fault_tolerance", f"How do you implement graceful degradation, circuit breakers, and retries with exponential backoff when downstream third-party APIs fail?"),
+                        ("tech_gap_challenge", f"Looking at high-scale requirements for **{role}**, one key technology is **{gap_skill}**. What is your architectural intuition regarding **{gap_skill}**, and how would you integrate it?")
+                    ])
+
+                # Filter out topics already asked
+                unasked = [t for t in topic_options if t[0] not in state.topics_covered]
+                
+                if unasked:
+                    chosen_topic, chosen_text = unasked[0]
+                else:
+                    # Generic fallback if all candidates exhausted
+                    chosen_topic = f"generic_probe_step_{step}"
+                    chosen_text = (
+                        f"That's a solid explanation. Stepping up to **{diff}** level: "
+                        f"How would your proposed solution change if we constrained memory footprint to 512MB RAM and required sub-50ms latency guarantees under 100,000 concurrent requests?"
+                    )
+
+                state.topics_covered.append(chosen_topic)
+                question_text = chosen_text
 
         question_msg = {
             "id": f"msg_{uuid.uuid4().hex[:8]}",
@@ -182,6 +302,7 @@ class LangGraphAdaptiveAgent:
         state.messages.append(question_msg)
         state.step_index += 1
         return question_msg
+
 
     @staticmethod
     def execute_interruption_check_node(answer_text: str, duration_seconds: int = 0) -> Optional[dict]:
