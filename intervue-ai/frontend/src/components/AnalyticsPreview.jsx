@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, CheckCircle, TrendingUp, AlertTriangle, Lightbulb, ChevronRight, BarChart2 } from 'lucide-react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { dashboardAPI } from '../services/api';
 
 /**
@@ -59,12 +59,11 @@ export default function AnalyticsPreview() {
 
   const data = analyticsData;
 
-
   return (
-    <section id="analytics" className="py-24 bg-[#0b0907] relative overflow-hidden">
+    <section id="analytics" className="py-24 bg-transparent relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+          <span className="text-xs font-mono font-bold tracking-widest text-sky-400 uppercase bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
             Actionable Feedback Engine
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -76,17 +75,17 @@ export default function AnalyticsPreview() {
         </div>
 
         {/* Analytics Card Mockup */}
-        <div className="max-w-5xl mx-auto rounded-2xl bg-[#14100c] border border-amber-900/80 p-6 md:p-8 shadow-2xl space-y-8">
+        <div className="max-w-5xl mx-auto rounded-2xl bg-slate-900/40 border border-slate-800/80 p-6 md:p-8 shadow-2xl space-y-8 backdrop-blur-xl">
           {/* Top Score Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 rounded-xl bg-amber-950/40 border border-amber-900/60 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 rounded-xl bg-slate-900/60 border border-slate-800/60 items-center">
             {/* Overall Score Dial */}
-            <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-amber-900/60 pb-6 md:pb-0 md:pr-6">
+            <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800/60 pb-6 md:pb-0 md:pr-6">
               <span className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Overall Interview Score</span>
               <div className="relative flex items-baseline gap-1">
                 <span className="text-6xl font-black text-white tracking-tight">{data.overallScore}</span>
                 <span className="text-xl font-bold text-slate-500">/ {data.maxScore}</span>
               </div>
-              <span className="mt-3 px-3 py-1 text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full flex items-center gap-1.5">
+              <span className="mt-3 px-3 py-1 text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5" />
                 {data.performanceLevel}
               </span>
@@ -101,12 +100,12 @@ export default function AnalyticsPreview() {
                     <span className="text-slate-300">{cat.name}</span>
                     <span className="text-white font-bold">{cat.score} <span className="text-xs text-slate-500">/ 100</span></span>
                   </div>
-                  <div className="w-full h-2.5 rounded-full bg-amber-950 overflow-hidden">
+                  <div className="w-full h-2.5 rounded-full bg-slate-950 overflow-hidden">
                     <div
                       className={`h-full rounded-full bg-gradient-to-r ${
-                        cat.score >= 90 ? 'from-amber-400 to-yellow-400' :
-                        cat.score >= 80 ? 'from-amber-500 to-orange-400' :
-                        'from-orange-500 to-rose-400'
+                        cat.score >= 90 ? 'from-sky-400 to-cyan-400' :
+                        cat.score >= 80 ? 'from-sky-500 to-blue-500' :
+                        'from-blue-600 to-indigo-600'
                       }`}
                       style={{ width: `${cat.score}%` }}
                     />
@@ -119,10 +118,10 @@ export default function AnalyticsPreview() {
           {/* Recharts Visualization Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Recharts Radar Chart */}
-            <div className="lg:col-span-6 p-6 rounded-xl bg-amber-950/20 border border-amber-900/60 flex flex-col justify-between">
+            <div className="lg:col-span-6 p-6 rounded-xl bg-slate-900/20 border border-slate-800/60 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-amber-400" />
+                  <BarChart2 className="w-4 h-4 text-sky-400" />
                   Competency Radar Map
                 </h4>
                 <span className="text-[11px] text-slate-400 font-mono">Live Matrix</span>
@@ -130,10 +129,10 @@ export default function AnalyticsPreview() {
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data.categories}>
-                    <PolarGrid stroke="#451a03" />
+                    <PolarGrid stroke="#1e293b" />
                     <PolarAngleAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#cbd5e1', fontSize: 12 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#78350f" />
-                    <Radar name="Candidate" dataKey="score" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.4} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#334155" />
+                    <Radar name="Candidate" dataKey="score" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.35} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -142,14 +141,14 @@ export default function AnalyticsPreview() {
             {/* Strengths & Improvements Callout */}
             <div className="lg:col-span-6 space-y-4 flex flex-col justify-between">
               {/* Strengths */}
-              <div className="p-5 rounded-xl bg-amber-950/40 border border-amber-500/20 space-y-2">
-                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-amber-400" /> Key Strengths
+              <div className="p-5 rounded-xl bg-sky-950/10 border border-sky-500/20 space-y-2">
+                <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-sky-400" /> Key Strengths
                 </h4>
-                <ul className="space-y-1.5 text-xs text-slate-300">
+                <ul className="space-y-1.5 text-xs text-slate-350 font-sans">
                   {data.strengths.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-amber-400 font-bold">•</span>
+                      <span className="text-sky-400 font-bold">•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -157,14 +156,14 @@ export default function AnalyticsPreview() {
               </div>
 
               {/* Focus Areas */}
-              <div className="p-5 rounded-xl bg-orange-950/20 border border-orange-500/20 space-y-2">
-                <h4 className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-orange-400" /> Recommended Focus Areas
+              <div className="p-5 rounded-xl bg-cyan-950/15 border border-cyan-500/20 space-y-2">
+                <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-cyan-400" /> Recommended Focus Areas
                 </h4>
-                <ul className="space-y-1.5 text-xs text-slate-300">
+                <ul className="space-y-1.5 text-xs text-slate-350 font-sans">
                   {data.improvements.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-orange-400 font-bold">•</span>
+                      <span className="text-cyan-400 font-bold">•</span>
                       <span>{item}</span>
                     </li>
                   ))}

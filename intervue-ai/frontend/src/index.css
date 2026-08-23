@@ -1,20 +1,53 @@
 @import "tailwindcss";
 
+@theme {
+  /* Remap indigo classes to Sky Blue */
+  --color-indigo-50: #f0f9ff;
+  --color-indigo-100: #e0f2fe;
+  --color-indigo-200: #bae6fd;
+  --color-indigo-300: #7dd3fc;
+  --color-indigo-400: #38bdf8;
+  --color-indigo-500: #0ea5e9;
+  --color-indigo-600: #0284c7;
+  --color-indigo-700: #0369a1;
+  --color-indigo-800: #075985;
+  --color-indigo-900: #0c4a6e;
+  --color-indigo-950: #082f49;
+
+  /* Remap violet classes to Cyan */
+  --color-violet-50: #ecfeff;
+  --color-violet-100: #cffafe;
+  --color-violet-200: #a5f3fc;
+  --color-violet-300: #67e8f9;
+  --color-violet-400: #22d3ee;
+  --color-violet-500: #06b6d4;
+  --color-violet-600: #0891b2;
+  --color-violet-700: #0e7490;
+  --color-violet-800: #155e75;
+  --color-violet-900: #164e63;
+  --color-violet-950: #083344;
+}
+
 @layer base {
   :root {
-    --bg-dark: #080c14;
+    --bg-dark: #030712;
     --bg-card: rgba(15, 23, 42, 0.85);
-    --border-glow: rgba(99, 102, 241, 0.3);
-    --accent-indigo: #6366f1;
-    --accent-violet: #8b5cf6;
-    --accent-purple: #a855f7;
-    --accent-cyan: #06b6d4;
+    --border-glow: rgba(14, 165, 233, 0.3);
+    --accent-indigo: #0ea5e9;
+    --accent-violet: #06b6d4;
+    --accent-purple: #38bdf8;
+    --accent-cyan: #22d3ee;
   }
 
   body {
     background-color: var(--bg-dark);
     color: #f8fafc;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     min-height: 100vh;
   }
@@ -43,8 +76,8 @@
 
 .glass-panel-hover:hover {
   background: rgba(30, 41, 59, 0.9);
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25);
+  border-color: rgba(14, 165, 233, 0.6);
+  box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.25);
   transform: translateY(-2px);
 }
 
@@ -56,7 +89,7 @@
 }
 
 .text-gradient-accent {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #22d3ee 100%);
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 50%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -71,7 +104,7 @@
 }
 
 .glow-indigo {
-  box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 40px -10px rgba(14, 165, 233, 0.25);
 }
 
 .glow-cyan {
@@ -79,25 +112,27 @@
 }
 
 .glow-purple {
-  box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.25);
+  box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.25);
 }
 
-/* Custom Scrollbar for Light UI */
+/* Custom Scrollbar for Dark UI */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #080c14;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #1e293b;
+  border-radius: 99px;
+  border: 1px solid #080c14;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #334155;
 }
 
 /* Pulse animation for voice indicator */

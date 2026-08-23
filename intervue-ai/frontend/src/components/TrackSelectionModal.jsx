@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Cpu, Code2, Users, FileText, ArrowRight, Upload, CheckCircle2,
-  Play, RefreshCw, Shield, Sparkles, User, Clock, Briefcase, HelpCircle
+  Play, RefreshCw, Shield, Sparkles, User, Clock, Briefcase, HelpCircle, Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { interviewAPI, resumeAPI } from '../services/api';
@@ -246,32 +246,83 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#07090e]/95 backdrop-blur-md overflow-y-auto font-sans select-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#04060a]/92 backdrop-blur-xl overflow-y-auto font-sans select-none">
+        {/* Glowing Ambient Blobs */}
+        <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[10%] w-[350px] h-[350px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[40%] left-[50%] -translate-x-1/2 w-[450px] h-[450px] bg-violet-600/5 rounded-full blur-[150px] pointer-events-none" />
         
         {/* Main Intervue Setup Card */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 15 }}
+          initial={{ opacity: 0, scale: 0.97, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          className="relative w-full max-w-5xl bg-[#0d1117] border border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden my-4"
+          exit={{ opacity: 0, scale: 0.97, y: 15 }}
+          className="relative w-full max-w-6xl xl:max-w-7xl bg-gradient-to-br from-[#0b0f19] via-[#080a12] to-[#04060a] border border-slate-800/90 rounded-3xl shadow-2xl overflow-hidden my-4"
         >
-          {/* Header Bar */}
-          <div className="px-6 pt-5 pb-3 border-b border-slate-800/60 flex items-center justify-between text-xs font-mono text-slate-400">
-            <div className="flex items-center gap-3">
-              <span className="text-emerald-400 font-bold uppercase tracking-wider">
-                SESSION SETUP &nbsp; 0{step} / 0{totalSteps}
-              </span>
-              <div className="w-32 sm:w-48 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
+          {/* Header Bar with Custom Step Nodes */}
+          <div className="px-8 py-6 border-b border-slate-800/60 bg-[#090c15]/80 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/25 px-2.5 py-0.5 rounded-full uppercase">
+                  Session Setup
+                </span>
+                <span className="text-[10px] font-mono text-slate-500 font-bold">
+                  Step {step} of {totalSteps}
+                </span>
               </div>
+              <h1 className="text-lg font-extrabold text-white font-sans mt-1">Configure Your AI Simulation</h1>
+            </div>
+
+            {/* Custom Progress Step Connector */}
+            <div className="flex items-center gap-2.5 md:gap-4 font-sans max-w-md w-full">
+              {[
+                { label: 'Format', num: 1 },
+                { label: isResumeMode ? 'Resume' : 'Level', num: 2 },
+                { label: 'Duration', num: 3 },
+                { label: 'Interviewer', num: 4 }
+              ].map((s) => {
+                const isActive = step === s.num;
+                const isCompleted = step > s.num;
+                return (
+                  <React.Fragment key={s.num}>
+                    {/* Step Node */}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-6.5 h-6.5 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                          isActive
+                            ? 'bg-gradient-to-tr from-indigo-500 to-cyan-400 text-slate-950 font-black ring-4 ring-indigo-500/20 scale-105'
+                            : isCompleted
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-slate-900 border border-slate-800 text-slate-500'
+                        }`}
+                      >
+                        {isCompleted ? '✓' : s.num}
+                      </div>
+                      <span
+                        className={`text-[11px] font-bold hidden sm:inline transition-colors duration-300 ${
+                          isActive ? 'text-white' : isCompleted ? 'text-indigo-400' : 'text-slate-500'
+                        }`}
+                      >
+                        {s.label}
+                      </span>
+                    </div>
+                    {/* Line Connector */}
+                    {s.num < 4 && (
+                      <div className="flex-grow h-[2px] min-w-[12px] bg-slate-900 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-500"
+                          style={{ width: isCompleted ? '100%' : '0%' }}
+                        />
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             <button
               onClick={onClose}
-              className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer text-xs font-bold"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-rose-400 hover:scale-105 transition-all cursor-pointer text-xs font-extrabold font-mono"
             >
               <span>✕ Cancel</span>
             </button>
@@ -288,33 +339,57 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                 {step === 1 && (
                   <div className="space-y-6">
                     <div>
-                      <div className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-1">
+                      <div className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold mb-1">
                         STEP 01 — FORMAT
                       </div>
                       <h2 className="text-3xl font-black text-white tracking-tight">What kind of interview?</h2>
                       <p className="text-sm text-slate-400 mt-1">Pick the format you want to practice today.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                       {FORMATS.map((f) => {
                         const isSelected = selectedFormat === f.id;
+                        const IconComponent = f.icon;
+                        
+                        // Icon Colors and themes
+                        let themeColor = "indigo";
+                        let iconBg = "bg-indigo-500/10 border-indigo-500/20 text-indigo-400";
+                        let selectedBorder = "border-indigo-500 shadow-indigo-500/10 shadow-lg";
+                        
+                        if (f.id === 'technical') {
+                          themeColor = "violet";
+                          iconBg = "bg-violet-500/10 border-violet-500/20 text-violet-400";
+                          selectedBorder = "border-violet-500 shadow-violet-500/10 shadow-lg";
+                        } else if (f.id === 'resume_deep_dive') {
+                          themeColor = "cyan";
+                          iconBg = "bg-cyan-500/10 border-cyan-500/20 text-cyan-400";
+                          selectedBorder = "border-cyan-500 shadow-cyan-500/10 shadow-lg";
+                        }
+
                         return (
                           <div
                             key={f.id}
                             onClick={() => setSelectedFormat(f.id)}
-                            className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between h-[160px] relative ${
+                            className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-[210px] relative hover:scale-[1.02] ${
                               isSelected
-                                ? 'bg-[#121926] border-emerald-500 shadow-xl shadow-emerald-500/10'
-                                : 'bg-[#0a0d14] border-slate-800/80 hover:border-slate-700'
+                                ? `bg-[#121929] ${selectedBorder} shadow-[0_0_20px_rgba(99,102,241,0.08)]`
+                                : 'bg-[#090b11] border-slate-800/80 hover:border-slate-700/80 hover:bg-[#0a0d18]'
                             }`}
                           >
-                            <div className="text-xs font-mono text-slate-500">{f.num}</div>
-                            <div>
-                              <h4 className="text-base font-bold text-white mb-1">{f.title}</h4>
-                              <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
+                            <div className="flex items-center justify-between">
+                              <div className={`w-10 h-10 rounded-xl ${iconBg} border flex items-center justify-center`}>
+                                <IconComponent className="w-5 h-5" />
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-500 font-bold">STAGE {f.num}</span>
+                            </div>
+                            <div className="mt-4">
+                              <h4 className="text-base font-extrabold text-white mb-1.5">{f.title}</h4>
+                              <p className="text-xs text-slate-400 leading-relaxed font-sans">{f.desc}</p>
                             </div>
                             {isSelected && (
-                              <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400" />
+                              <div className="absolute top-4 right-4 flex items-center justify-center">
+                                <span className={`w-2.5 h-2.5 rounded-full ${f.id === 'behavioral' ? 'bg-indigo-400 shadow-indigo-400' : f.id === 'technical' ? 'bg-violet-400 shadow-violet-400' : 'bg-cyan-400 shadow-cyan-400'} shadow-[0_0_8px]`} />
+                              </div>
                             )}
                           </div>
                         );
@@ -330,23 +405,23 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                       /* Resume Deep Dive Step 2: Upload Resume */
                       <div className="space-y-5">
                         <div>
-                          <div className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-1">
+                          <div className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold mb-1">
                             STEP 02 — RESUME
                           </div>
                           <h2 className="text-3xl font-black text-white tracking-tight">Upload your resume</h2>
                           <p className="text-sm text-slate-400 mt-1">We'll tailor every question to your specific experience.</p>
                         </div>
 
-                        {/* Resume Dropzone Box (Exact match to screenshot 2) */}
+                        {/* Resume Dropzone Box */}
                         <div
                           onDragEnter={handleDrag}
                           onDragOver={handleDrag}
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
-                          className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-3 ${
+                          className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer flex flex-col items-center justify-center space-y-4 relative overflow-hidden ${
                             dragActive
-                              ? 'border-emerald-400 bg-emerald-950/20'
-                              : 'border-slate-800 bg-[#0a0d14] hover:border-slate-700'
+                              ? 'border-indigo-400 bg-indigo-500/5 shadow-[0_0_20px_rgba(99,102,241,0.05)]'
+                              : 'border-slate-800 bg-[#07090f] hover:border-slate-700/80 hover:bg-[#0a0d17]'
                           }`}
                         >
                           <input
@@ -356,29 +431,44 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                             onChange={(e) => e.target.files?.[0] && handleModalFileUpload(e.target.files[0])}
                             className="hidden"
                           />
-                          <label htmlFor="intervue-resume-pdf" className="cursor-pointer space-y-3 block w-full">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-400">
-                              <FileText className="w-6 h-6 text-slate-300" />
+                          <label htmlFor="intervue-resume-pdf" className="cursor-pointer space-y-4 block w-full">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-300 shadow-md">
+                              <Upload className={`w-7 h-7 text-indigo-400 ${uploadingResume ? 'animate-bounce' : ''}`} />
                             </div>
 
-                            <div>
-                              <div className="text-base font-bold text-white">
-                                {uploadingResume ? 'Parsing Resume PDF...' : 'Drop your resume PDF here'}
+                            <div className="space-y-1">
+                              <div className="text-base font-extrabold text-white">
+                                {uploadingResume ? 'Extracting Resume Intelligence...' : 'Upload your Professional Resume'}
                               </div>
-                              <p className="text-xs text-slate-500 mt-0.5">or click to browse — PDF only</p>
+                              <p className="text-xs text-slate-400 font-sans">
+                                Drag and drop your PDF here, or click to explore folders.
+                              </p>
+                              <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest pt-1">
+                                Supported formats: PDF only (Max 5MB)
+                              </p>
                             </div>
 
                             <div className="pt-2">
-                              <span className="px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 transition-colors">
-                                {uploadingResume ? 'Parsing...' : '• Browse files →'}
+                              <span className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 font-extrabold text-xs inline-flex items-center gap-2 transition-all hover:scale-102 hover:shadow-lg hover:shadow-indigo-500/10">
+                                {uploadingResume ? (
+                                  <>
+                                    <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                    <span>Processing...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Select PDF File</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </>
+                                )}
                               </span>
                             </div>
                           </label>
                         </div>
 
                         {resumeFileName && (
-                          <div className="p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex items-center gap-2 text-xs font-mono text-emerald-300">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="p-3.5 rounded-2xl bg-[#121929] border border-indigo-500/30 flex items-center gap-2 text-xs font-mono text-indigo-300">
+                            <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0" />
                             <span>Attached Resume: <strong>{resumeFileName}</strong></span>
                           </div>
                         )}
@@ -389,28 +479,42 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                       /* Technical/Behavioral Step 2: Role Selection */
                       <div className="space-y-6">
                         <div>
-                          <div className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-1">
+                          <div className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold mb-1">
                             STEP 02 — ROLE LEVEL
                           </div>
                           <h2 className="text-3xl font-black text-white tracking-tight">What level are you targeting?</h2>
                           <p className="text-sm text-slate-400 mt-1">We'll calibrate question depth and expectations.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                           {TARGET_ROLES.map((r) => {
                             const isSelected = selectedRole === r.id;
                             return (
                               <div
                                 key={r.id}
                                 onClick={() => setSelectedRole(r.id)}
-                                className={`p-5 rounded-2xl border transition-all cursor-pointer ${
+                                className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-[130px] relative hover:scale-[1.01] ${
                                   isSelected
-                                    ? 'bg-[#121926] border-emerald-500 shadow-xl shadow-emerald-500/10'
-                                    : 'bg-[#0a0d14] border-slate-800/80 hover:border-slate-700'
+                                    ? 'bg-[#121929] border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.08)]'
+                                    : 'bg-[#090b11] border-slate-800/80 hover:border-slate-700/80 hover:bg-[#0a0d18]'
                                 }`}
                               >
-                                <h4 className="text-base font-bold text-white mb-1">{r.title}</h4>
-                                <p className="text-xs text-slate-400 leading-relaxed">{r.desc}</p>
+                                <div>
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <h4 className="text-base font-extrabold text-white">{r.title}</h4>
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold ${
+                                      isSelected ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                                    }`}>
+                                      {r.level}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-400 leading-relaxed font-sans">{r.desc}</p>
+                                </div>
+                                {isSelected && (
+                                  <div className="absolute top-4 right-4">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -424,28 +528,29 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                 {step === 3 && (
                   <div className="space-y-6">
                     <div>
-                      <div className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-1">
+                      <div className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold mb-1">
                         STEP 03 — DURATION
                       </div>
                       <h2 className="text-3xl font-black text-white tracking-tight">How long do you have?</h2>
                       <p className="text-sm text-slate-400 mt-1">We'll pace the questions to fit your window.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
                       {DURATIONS.map((d) => {
                         const isSelected = selectedDuration === d.id;
                         return (
                           <div
                             key={d.id}
                             onClick={() => setSelectedDuration(d.id)}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer text-center ${
+                            className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer text-center flex flex-col justify-center items-center gap-1.5 hover:scale-[1.02] ${
                               isSelected
-                                ? 'bg-[#121926] border-emerald-500 shadow-xl shadow-emerald-500/10'
-                                : 'bg-[#0a0d14] border-slate-800/80 hover:border-slate-700'
+                                ? 'bg-[#121929] border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.08)]'
+                                : 'bg-[#090b11] border-slate-800/80 hover:border-slate-700/80 hover:bg-[#0a0d18]'
                             }`}
                           >
-                            <div className="text-lg font-black text-white mb-1">{d.title}</div>
-                            <div className="text-[11px] text-slate-400">{d.desc}</div>
+                            <Clock className={`w-5 h-5 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`} />
+                            <div className="text-lg font-black text-white">{d.title}</div>
+                            <div className="text-[10px] font-medium text-slate-400 font-sans">{d.desc}</div>
                           </div>
                         );
                       })}
@@ -457,38 +562,45 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                 {step === 4 && (
                   <div className="space-y-6">
                     <div>
-                      <div className="text-[11px] font-mono text-emerald-400 uppercase tracking-widest font-bold mb-1">
+                      <div className="text-[11px] font-mono text-indigo-400 uppercase tracking-widest font-bold mb-1">
                         STEP 04 — INTERVIEWER
                       </div>
                       <h2 className="text-3xl font-black text-white tracking-tight">Interviewer</h2>
                       <p className="text-sm text-slate-400 mt-1">Pick a persona. Each has a different pace and follow-up style.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       {PERSONAS.map((p) => {
                         const isSelected = selectedPersona === p.id;
                         return (
                           <div
                             key={p.id}
                             onClick={() => setSelectedPersona(p.id)}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                            className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer space-y-3 hover:scale-[1.01] ${
                               isSelected
-                                ? 'bg-[#121926] border-emerald-500 shadow-xl shadow-emerald-500/10'
-                                : 'bg-[#0a0d14] border-slate-800/80 hover:border-slate-700'
+                                ? 'bg-[#121929] border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.08)]'
+                                : 'bg-[#090b11] border-slate-800/80 hover:border-slate-700/80 hover:bg-[#0a0d18]'
                             }`}
                           >
-                            <div className="flex items-center gap-2.5">
-                              <div className={`w-7 h-7 rounded-lg ${p.badgeBg} flex items-center justify-center text-white font-bold text-xs`}>
-                                {p.badge}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-xl ${p.badgeBg} flex items-center justify-center text-white font-black text-xs shadow-md`}>
+                                  {p.badge}
+                                </div>
+                                <div className="text-left">
+                                  <span className="text-sm font-bold text-white block">{p.name}</span>
+                                  <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block leading-tight">
+                                    {p.type}
+                                  </span>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-sm font-bold text-white">{p.name}</span>
-                                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">
-                                  {p.type}
-                                </span>
-                              </div>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold ${
+                                isSelected ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                              }`}>
+                                {p.type === 'SUPPORTIVE' ? 'Easy' : p.type === 'CORPORATE' ? 'Medium' : p.type === 'PRESSURE' ? 'Hard' : 'Probing'}
+                              </span>
                             </div>
-                            <p className="text-xs text-slate-400 leading-relaxed">{p.desc}</p>
+                            <p className="text-xs text-slate-400 leading-relaxed font-sans">{p.desc}</p>
                           </div>
                         );
                       })}
@@ -515,26 +627,26 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
                   <button
                     type="button"
                     onClick={() => setStep(step + 1)}
-                    className="px-6 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-slate-950 font-black text-xs shadow-lg shadow-indigo-500/15 flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] hover:shadow-indigo-500/25"
                   >
-                    <span>• Continue →</span>
+                    <span>Continue Simulation setup →</span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     disabled={starting || uploadingResume}
                     onClick={handleStartSession}
-                    className="px-6 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] disabled:opacity-50"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-violet-600 to-cyan-500 text-white font-black text-xs shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] disabled:opacity-50"
                   >
                     {starting ? (
                       <>
-                        <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                        <span>Initializing...</span>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Initializing Room...</span>
                       </>
                     ) : (
                       <>
-                        <Play className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                        <span>• Start interview →</span>
+                        <Play className="w-3.5 h-3.5 fill-white text-white" />
+                        <span>Start AI Simulation</span>
                       </>
                     )}
                   </button>
@@ -543,49 +655,73 @@ export default function TrackSelectionModal({ isOpen, onClose, defaultRole = 'Se
             </div>
 
             {/* Right Column: "YOUR SESSION" Widget */}
-            <div className="lg:col-span-4 bg-[#0a0c12] border-t lg:border-t-0 lg:border-l border-slate-800/80 p-6 space-y-6 flex flex-col justify-between">
-              <div className="space-y-5">
-                <div className="text-[11px] font-mono text-slate-400 uppercase tracking-widest font-bold pb-3 border-b border-slate-800/60">
-                  YOUR SESSION
+            <div className="lg:col-span-4 bg-[#07090f]/75 border-t lg:border-t-0 lg:border-l border-slate-800/80 p-8 space-y-6 flex flex-col justify-between relative">
+              <div className="absolute inset-0 bg-[#090b12]/30 pointer-events-none" />
+              
+              <div className="space-y-6 relative z-10">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800/60">
+                  <span className="text-[11px] font-mono text-slate-400 uppercase tracking-widest font-bold flex items-center gap-2">
+                    <Cpu className="w-3.5 h-3.5 text-indigo-400" />
+                    Simulation Spec
+                  </span>
+                  <span className="text-[9px] font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded font-bold">
+                    DRAFT
+                  </span>
                 </div>
 
-                <div className="space-y-4 text-xs font-mono">
+                <div className="space-y-5 text-xs font-sans">
                   {/* Type */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Type</span>
-                    <span className="text-slate-200 font-bold">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                      <span className="text-slate-400 font-medium">Format</span>
+                    </div>
+                    <span className="text-white font-extrabold text-xs">
                       {currentFormatObj ? currentFormatObj.title : '—'}
                     </span>
                   </div>
 
                   {/* Resume (if uploaded) */}
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-slate-500 shrink-0">Resume</span>
-                    <span className="text-slate-200 font-bold text-right truncate max-w-[150px]">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                      <span className="text-slate-400 font-medium">Resume</span>
+                    </div>
+                    <span className="text-white font-extrabold text-xs truncate max-w-[140px]" title={resumeFileName || userResumeProfile?.file_name}>
                       {resumeFileName || userResumeProfile?.file_name || '—'}
                     </span>
                   </div>
 
                   {/* Duration */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Duration</span>
-                    <span className="text-slate-200 font-bold">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-violet-400" />
+                      <span className="text-slate-400 font-medium">Duration</span>
+                    </div>
+                    <span className="text-white font-extrabold text-xs">
                       {step >= 3 ? selectedDuration : '—'}
                     </span>
                   </div>
 
                   {/* Interviewer Persona */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Interviewer</span>
-                    <span className="text-slate-200 font-bold">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-slate-400 font-medium">Interviewer</span>
+                    </div>
+                    <span className="text-white font-extrabold text-xs">
                       {step >= 4 ? selectedPersona : '—'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-800/60 text-[11px] text-slate-500 leading-relaxed">
-                Your choices will appear here as you go. Questions will adapt in real-time to your specific resume experience.
+              {/* Boarding-pass style ticket notch dotted line */}
+              <div className="relative z-10 border-t border-dashed border-slate-800/80 pt-6 space-y-4">
+                <div className="text-[10px] text-slate-400 font-mono leading-relaxed bg-slate-950/40 p-3.5 rounded-xl border border-slate-850">
+                  <span className="text-indigo-400 font-bold block mb-1">⚡ Platform Notice</span>
+                  Your choices determine the question generation logic. Questions will dynamically calibrate in real-time using LangGraph based on your credentials.
+                </div>
               </div>
             </div>
 

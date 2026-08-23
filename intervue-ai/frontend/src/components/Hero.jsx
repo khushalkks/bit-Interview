@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Play, Sparkles, Code2, MessageSquare, Award, Mic, CheckCircle2, ChevronRight, Terminal } from 'lucide-react';
+import { Bot, Play, Sparkles, Award, Mic, CheckCircle2, ChevronRight } from 'lucide-react';
 
 export default function Hero() {
   const scrollToSection = (id) => {
@@ -11,42 +11,38 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden bg-grid-pattern bg-[#080c14]">
+    <section className="relative pt-36 pb-24 md:pt-48 md:pb-36 overflow-hidden bg-transparent">
       {/* Background ambient light glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[550px] bg-indigo-600/20 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute top-1/3 left-1/4 w-[450px] h-[450px] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-cyan-500/15 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[950px] h-[750px] bg-sky-500/10 rounded-full blur-[200px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
+      <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-cyan-500/8 rounded-full blur-[170px] pointer-events-none" />
+      <div className="absolute top-1/2 right-1/4 w-[650px] h-[650px] bg-sky-600/8 rounded-full blur-[180px] pointer-events-none animate-pulse" style={{ animationDuration: '10s' }} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center max-w-3xl mx-auto space-y-6">
+        
+        {/* Stacked Layout */}
+        <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
+          
           {/* AI Badge */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-mono font-bold tracking-widest uppercase shadow-xl shadow-indigo-500/15 backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-slate-800/80 text-sky-400 text-xs font-mono tracking-wider font-semibold shadow-2xl backdrop-blur-md"
           >
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <span>⚡ BIT-INTERVIEW — AI TECHNICAL INTERVIEW PLATFORM</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>Next-Gen Technical Simulator</span>
           </motion.div>
 
-          {/* Main Headline with Prominent Central Bit-Interview Branding */}
+          {/* Main Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1]"
+            className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12]"
           >
             Master Technical Rounds with <br />
-            <span className="text-gradient-accent relative inline-block">
+            <span className="bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
               Bit-Interview AI
-              <svg
-                className="absolute -bottom-2 left-0 w-full h-3 text-cyan-400/50"
-                viewBox="0 0 100 20"
-                preserveAspectRatio="none"
-              >
-                <path d="M0,15 Q50,0 100,15" fill="none" stroke="currentColor" strokeWidth="4" />
-              </svg>
             </span>
           </motion.h1>
 
@@ -55,9 +51,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto"
+            className="text-base sm:text-lg text-slate-400 font-normal leading-relaxed max-w-2xl mx-auto"
           >
-            Practice real-time adaptive voice interviews, Monaco IDE code execution, and ATS resume matching. Built to make you interview-ready.
+            Practice real-time voice sessions with adaptive LangGraph AI agents, write live code in Monaco IDE, and track job match accuracy instantly.
           </motion.p>
 
           {/* Action Buttons */}
@@ -65,154 +61,121 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 w-full"
           >
             <button
               onClick={() => scrollToSection('interview-types')}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600 text-slate-950 font-black text-base shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all flex items-center justify-center gap-2.5 cursor-pointer group hover:scale-[1.02]"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-sm shadow-[0_8px_30px_rgb(14,165,233,0.25)] hover:shadow-[0_8px_30px_rgb(14,165,233,0.45)] hover:scale-[1.02] transition-all flex items-center justify-center gap-2 cursor-pointer group"
             >
-              <span>Launch Bit-Interview Session</span>
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-slate-950" />
+              <span>Launch Interview Room</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/80 font-bold text-base shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer backdrop-blur-md"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 text-slate-300 hover:text-white font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer backdrop-blur-md"
             >
-              <Play className="w-4 h-4 text-cyan-400 fill-cyan-400" />
-              <span>Watch AI Workflow</span>
+              <Play className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
+              <span>Watch Workflow</span>
             </button>
           </motion.div>
         </div>
 
-        {/* Visually Impressive Obsidian Glass Interview Room Mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-14 max-w-5xl mx-auto rounded-3xl p-1.5 bg-gradient-to-b from-indigo-500/30 via-violet-500/20 to-slate-900/80 shadow-2xl shadow-indigo-950/80 backdrop-blur-xl"
-        >
-          <div className="bg-[#0b0f19] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
-            {/* Top Bar of the Mock Editor / Room */}
-            <div className="px-5 py-3.5 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
-                <span className="ml-3 text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
-                  <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                  bit-interview // Technical - Senior Full Stack Engineer
-                </span>
+        {/* Large Centered 3D Preview Container (Spans full page width up to max-w-5xl) */}
+        <div className="mt-20 flex justify-center relative px-6 sm:px-0 z-10" style={{ perspective: 1400 }}>
+          {/* Ambient Synapse Backlight Glow */}
+          <div className="absolute inset-16 bg-gradient-to-tr from-sky-500/12 via-cyan-500/12 to-blue-600/12 rounded-full blur-[110px] pointer-events-none z-0 animate-pulse" style={{ animationDuration: '8s' }} />
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, rotateX: 8, rotateY: -10, z: -30 }}
+            animate={{ 
+              y: [0, -8, 0],
+              rotateX: 8,
+              rotateY: -10,
+              z: -30,
+              opacity: 1,
+              scale: 1
+            }}
+            whileHover={{
+              scale: 1.04,
+              rotateX: 0,
+              rotateY: 0,
+              z: 40,
+              y: -20,
+              transition: { duration: 0.45, ease: "easeOut" }
+            }}
+            transition={{ 
+              opacity: { duration: 0.8, delay: 0.4 },
+              scale: { duration: 0.8, delay: 0.4 },
+              y: { repeat: Infinity, duration: 6, ease: "easeInOut" },
+              rotateX: { duration: 0.4, ease: "easeOut" },
+              rotateY: { duration: 0.4, ease: "easeOut" },
+              z: { duration: 0.4, ease: "easeOut" }
+            }}
+            style={{ transformStyle: "preserve-3d" }}
+            className="relative max-w-5xl w-full rounded-3xl p-1.5 bg-gradient-to-b from-sky-500/40 via-cyan-500/25 to-slate-900/90 shadow-[0_0_80px_rgba(14,165,233,0.28)] hover:shadow-[0_0_100px_rgba(14,165,233,0.45)] border border-sky-500/10 hover:border-cyan-400/30 transition-all duration-300 overflow-visible z-10"
+          >
+            
+            {/* Floating Live Metric Card */}
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              style={{ translateZ: 50, transformStyle: "preserve-3d" }}
+              className="absolute -bottom-6 -left-8 p-3.5 rounded-2xl bg-slate-950/95 border border-slate-800 shadow-2xl backdrop-blur-md flex items-center gap-3.5 z-20 select-none"
+            >
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                <Award className="w-5.5 h-5.5 text-cyan-400" />
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-mono bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/30 font-bold">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  LIVE ADAPTIVE ROOM
-                </div>
-                <div className="text-xs font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md font-bold">
-                  00:14:28
-                </div>
+              <div className="text-left">
+                <div className="text-[9px] text-slate-400 font-mono font-bold uppercase tracking-wider">Evaluation Score</div>
+                <div className="text-sm font-black text-white">92% <span className="text-[10px] font-normal text-slate-500">Match</span></div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Grid Layout inside Interview Room Mockup */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Left Column: AI Avatar & Live Audio Waveform (5 cols) */}
-              <div className="lg:col-span-5 p-6 border-b lg:border-b-0 lg:border-r border-slate-800 bg-[#0b0f19]/80 flex flex-col justify-between space-y-4">
-                {/* AI Interviewer Avatar Card */}
-                <div className="relative rounded-2xl p-4 bg-slate-900/90 border border-slate-800 flex items-center gap-4 shadow-lg">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 via-violet-500 to-cyan-400 p-[2px] animate-audio-pulse">
-                      <div className="w-full h-full rounded-full bg-[#0b0f19] flex items-center justify-center">
-                        <Bot className="w-8 h-8 text-cyan-300" />
-                      </div>
-                    </div>
-                    <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-400 border-2 border-[#0b0f19]" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-white">AI Interviewer (Alex)</h4>
-                      <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md border border-indigo-500/30">
-                        LangGraph Agent
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-0.5 font-normal">Focus: System Design & Algorithms</p>
-                    <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-cyan-400">
-                      <Mic className="w-3.5 h-3.5 animate-pulse text-cyan-400" />
-                      <span>Speaking Question...</span>
-                    </div>
-                  </div>
-                </div>
+            {/* Floating Live Agent Status Card */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.5 }}
+              style={{ translateZ: 75, transformStyle: "preserve-3d" }}
+              className="absolute -top-6 -right-4 p-2.5 px-4 rounded-xl bg-slate-950/95 border border-slate-855 shadow-2xl backdrop-blur-md flex items-center gap-2 z-20 font-mono text-[9px] select-none"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+              <span className="text-slate-300 font-bold uppercase tracking-widest">LangGraph: Active</span>
+            </motion.div>
 
-                {/* AI Question Prompt Card */}
-                <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-xs sm:text-sm text-indigo-100 leading-relaxed shadow-inner">
-                  <p className="font-bold text-cyan-400 text-xs uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Current Challenge
-                  </p>
-                  "Could you explain how asynchronous non-blocking event loops handle high concurrency in Node.js, and how event loop starvation can be prevented in production?"
+            <div className="bg-[#0b0f19] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative z-10">
+              {/* Browser top-bar */}
+              <div className="px-5 py-3.5 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                  <span className="ml-2 font-semibold text-slate-300">bit-interview // Live Simulation Screen</span>
                 </div>
-
-                {/* Real-time Candidate Score Badge Preview */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold">Live Score</div>
-                      <div className="text-base font-black text-white">88 <span className="text-xs text-slate-500 font-normal">/ 100</span></div>
-                    </div>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold">Clarity</div>
-                      <div className="text-base font-black text-emerald-400">High (92%)</div>
-                    </div>
-                  </div>
-                </div>
+                <span className="text-cyan-400 font-bold tracking-widest">PLATFORM ACTIVE</span>
               </div>
 
-              {/* Right Column: Code Editor & Transcript (7 cols) */}
-              <div className="lg:col-span-7 bg-[#070a11] flex flex-col justify-between text-slate-200">
-                {/* Code Snippet Header */}
-                <div className="px-4 py-2.5 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <div className="flex items-center gap-2">
-                    <Code2 className="w-4 h-4 text-cyan-400" />
-                    <span>lru_cache.py</span>
-                  </div>
-                  <span className="text-cyan-400 font-bold">Monaco Sandbox IDE</span>
-                </div>
-
-                {/* Code Window */}
-                <div className="p-5 font-mono text-xs sm:text-sm text-slate-300 space-y-1 bg-[#0b0f19] overflow-x-auto leading-relaxed">
-                  <div className="text-slate-500"># O(1) Time Complexity Session Cache Solution</div>
-                  <div><span className="text-indigo-400">class</span> <span className="text-cyan-300">LRUCache</span>:</div>
-                  <div className="pl-4"><span className="text-indigo-400">def</span> <span className="text-cyan-300">__init__</span>(self, capacity: <span className="text-orange-400">int</span>):</div>
-                  <div className="pl-8 text-slate-300">self.capacity = capacity</div>
-                  <div className="pl-8 text-slate-300">self.cache = &#123;&#125;  <span className="text-slate-500"># Hash Map + Doubly Linked List</span></div>
-                  <div className="pl-4"><span className="text-indigo-400">def</span> <span className="text-cyan-300">get</span>(self, key: <span className="text-orange-400">str</span>):</div>
-                  <div className="pl-8 text-slate-300"><span className="text-indigo-400">if</span> key <span className="text-indigo-400">not in</span> self.cache:</div>
-                  <div className="pl-12 text-slate-300"><span className="text-indigo-400">return</span> <span className="text-rose-400">-1</span></div>
-                  <div className="pl-8 text-slate-300">self.cache.move_to_end(key)</div>
-                  <div className="pl-8 text-slate-300"><span className="text-indigo-400">return</span> self.cache[key]</div>
-                </div>
-
-                {/* Live Audio Transcript Stream */}
-                <div className="p-4 border-t border-slate-800 bg-[#0d1322] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <MessageSquare className="w-3.5 h-3.5 text-cyan-400" /> Speech Transcript
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#070a11] border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans">
-                    <span className="text-cyan-400 font-bold">Candidate:</span> "I implemented an LRU cache using Python's OrderedDict logic to achieve O(1) time complexity for both get and put operations under heavy concurrent loads..."
-                  </div>
+              {/* 3D Cartoon Interview Scene Illustration */}
+              <div className="relative group overflow-hidden aspect-[16/9] w-full">
+                <img 
+                  src="/cartoon_interview_scene.jpg" 
+                  alt="AI Robot and Candidate Interview Session Simulation"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                {/* Subtle glassmorphic HUD overlays on the image */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 backdrop-blur-md text-[11px] font-mono text-slate-300">
+                  <span className="flex items-center gap-2 text-cyan-400 font-bold">
+                    <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                    LangGraph DAG Active
+                  </span>
+                  <span>Assessors Connected</span>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
+        
       </div>
     </section>
   );

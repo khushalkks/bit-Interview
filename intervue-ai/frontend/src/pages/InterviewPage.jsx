@@ -397,62 +397,117 @@ export default function InterviewPage() {
               <Layers className="w-3.5 h-3.5" />
               <span>System Architecture</span>
             </button>
-          </div>
-
-          {/* ACTIVE TAB CONTENT */}
+          </div>          {/* ACTIVE TAB CONTENT */}
           {activeTab === 'voice' && (
-            <div className="w-full flex-grow flex flex-col items-center justify-center space-y-8 my-auto max-w-xl">
+            <div className="w-full flex-grow flex flex-col items-center justify-center space-y-10 my-auto max-w-2xl px-4">
               
               {/* Header Status */}
-              <div className="text-center space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-1">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+              <div className="text-center space-y-1 select-none">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-[10px] font-mono tracking-wider font-semibold mb-1 shadow-md animate-pulse">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Real-Time Voice Session Active</span>
                 </div>
-                <h3 className="text-sm text-slate-400 font-mono">
-                  {isListening ? "• Speaking into Microphone..." : "• AI Assessor Ready"}
+                <h3 className="text-xs text-slate-400 font-mono tracking-wide">
+                  {isListening ? "• Speaking into Microphone..." : "• AI Assessor Listening"}
                 </h3>
               </div>
 
-              {/* Dynamic Soundwave Audio Visualizer */}
-              <div className="p-8 rounded-3xl bg-slate-900/70 border border-slate-800/90 shadow-2xl backdrop-blur-2xl w-full flex flex-col items-center justify-center space-y-6 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all pointer-events-none" />
+              {/* Futuristic Glowing AI Orb Container */}
+              <div className="relative w-72 h-72 flex items-center justify-center my-2 select-none">
+                {/* Outer Ripple Ring 3 */}
+                <motion.div
+                  animate={{ scale: [1, 1.35, 1], opacity: [0.15, 0.02, 0.15] }}
+                  transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute w-full h-full rounded-full border border-indigo-500/15 pointer-events-none"
+                />
+                
+                {/* Outer Ripple Ring 2 */}
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.25, 0.04, 0.25] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  className="absolute w-[80%] h-[80%] rounded-full border border-violet-500/15 pointer-events-none"
+                />
 
-                {/* Sound Wave Animation Bars */}
-                <div className="flex items-center justify-center gap-1.5 h-24 w-full px-4">
-                  {[35, 65, 40, 85, 55, 95, 70, 45, 100, 60, 90, 50, 80, 40, 85, 55, 75, 45].map((h, i) => (
+                {/* Outer Ripple Ring 1 */}
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.35, 0.08, 0.35] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                  className="absolute w-[65%] h-[65%] rounded-full border border-cyan-500/20 pointer-events-none"
+                />
+
+                {/* Core Glowing Orb */}
+                <motion.div
+                  animate={{
+                    boxShadow: isListening 
+                      ? [
+                          "0 0 25px rgba(6,182,212,0.2), inset 0 0 15px rgba(6,182,212,0.15)",
+                          "0 0 50px rgba(99,102,241,0.5), inset 0 0 30px rgba(99,102,241,0.4)",
+                          "0 0 25px rgba(6,182,212,0.2), inset 0 0 15px rgba(6,182,212,0.15)"
+                        ]
+                      : [
+                          "0 0 30px rgba(99,102,241,0.2), inset 0 0 15px rgba(99,102,241,0.2)",
+                          "0 0 45px rgba(139,92,246,0.35), inset 0 0 25px rgba(139,92,246,0.3)",
+                          "0 0 30px rgba(99,102,241,0.2), inset 0 0 15px rgba(99,102,241,0.2)"
+                        ],
+                    scale: isListening ? [0.98, 1.03, 0.98] : [1, 1.01, 1]
+                  }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                  className={`w-[45%] h-[45%] rounded-full bg-gradient-to-tr ${
+                    isListening 
+                      ? 'from-[#0891b2] via-[#4f46e5] to-[#a855f7]' 
+                      : 'from-[#1e1b4b] via-[#311c6d] to-[#0f172a]'
+                  } flex flex-col items-center justify-center relative border border-white/10 z-10 shadow-2xl`}
+                >
+                  <Bot className={`w-9 h-9 ${isListening ? 'text-cyan-200 animate-pulse' : 'text-indigo-200'}`} />
+                  
+                  {/* Rotating decorative ticks */}
+                  <div className="absolute inset-[-8px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: '14s' }} />
+                </motion.div>
+                
+                {/* Active pulse glow state indicator */}
+                <div className="absolute top-[28%] right-[28%] z-20">
+                  <span className={`w-2.5 h-2.5 rounded-full ${isListening ? 'bg-cyan-400 shadow-cyan-400' : 'bg-indigo-400 shadow-indigo-400'} shadow-[0_0_8px] block animate-pulse`} />
+                </div>
+              </div>
+
+              {/* Sound Wave Animation Bars (Modern Segmented wave) */}
+              <div className="p-6 rounded-2xl bg-[#090b13]/85 border border-slate-800/80 shadow-2xl backdrop-blur-xl w-full flex flex-col items-center justify-center space-y-4">
+                <div className="flex items-center justify-center gap-1.5 h-16 w-full px-4">
+                  {[25, 55, 35, 80, 50, 90, 65, 40, 95, 55, 85, 45, 75, 35, 70, 50, 65, 40].map((h, i) => (
                     <motion.div
                       key={i}
                       animate={{
-                        height: isListening ? [`${h * 0.25}%`, `${h}%`, `${h * 0.25}%`] : [`${h * 0.35}%`, `${h * 0.65}%`, `${h * 0.35}%`]
+                        height: isListening ? [`${h * 0.2}%`, `${h}%`, `${h * 0.2}%`] : ["15%", "35%", "15%"]
                       }}
                       transition={{
-                        duration: 0.7,
+                        duration: 0.6,
                         repeat: Infinity,
-                        delay: i * 0.04,
+                        delay: i * 0.03,
                         ease: 'easeInOut'
                       }}
                       className={`w-2 rounded-full ${
                         isListening 
-                          ? 'bg-gradient-to-t from-cyan-500 to-indigo-500' 
-                          : 'bg-gradient-to-t from-indigo-500 to-violet-500'
+                          ? 'bg-gradient-to-t from-cyan-400 via-indigo-500 to-violet-500' 
+                          : 'bg-slate-850'
                       }`}
                     />
                   ))}
                 </div>
 
                 {/* Active Persona Pill Badge */}
-                <div className="p-3 px-5 rounded-2xl bg-slate-950/90 border border-slate-800 flex items-center gap-3.5 shadow-xl">
-                  <div className={`w-9 h-9 rounded-xl ${persona.badgeBg} flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0`}>
+                <div className="flex items-center gap-3.5 py-2.5 px-5 rounded-xl bg-slate-950/60 border border-slate-900 shadow-lg">
+                  <div className={`w-8.5 h-8.5 rounded-xl ${persona.badgeBg} flex items-center justify-center text-white font-extrabold text-xs shadow-md shrink-0`}>
                     {persona.badge}
                   </div>
-                  <div className="text-left">
-                    <div className="text-xs font-bold text-white flex items-center gap-2">
-                      <span>{persona.name}</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="text-left font-sans">
+                    <div className="text-xs font-extrabold text-white flex items-center gap-2">
+                      <span>Interviewer: {persona.name}</span>
+                      <span className="inline-flex items-center gap-1 text-[8px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-widest animate-pulse">
+                        <Radio className="w-2.5 h-2.5 text-emerald-400" /> Live
+                      </span>
                     </div>
-                    <div className="text-[11px] font-mono text-slate-400">
-                      {persona.type} Mode • Senior Assessor
+                    <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                      {persona.type} Personality • Calibrating Response Depth
                     </div>
                   </div>
                 </div>
@@ -460,8 +515,8 @@ export default function InterviewPage() {
 
               {/* Spoken Text Live Streaming Preview */}
               {answerText && (
-                <div className="w-full p-4 rounded-2xl bg-slate-950/80 border border-indigo-500/30 text-xs font-mono text-indigo-200 text-center shadow-xl">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold tracking-wider mb-1">Live Dictation Transcript</span>
+                <div className="w-full p-4 rounded-xl bg-[#090b13]/80 border border-indigo-500/20 text-xs font-mono text-indigo-200 text-center shadow-lg backdrop-blur-md">
+                  <span className="text-slate-500 block text-[9px] uppercase font-bold tracking-wider mb-1">Live Dictation Transcript</span>
                   "{answerText}"
                 </div>
               )}
@@ -543,14 +598,16 @@ export default function InterviewPage() {
         </div>
 
         {/* Right Side: LIVE TRANSCRIPT Stream (4 Cols) */}
-        <div className="lg:col-span-4 bg-[#090d19]/90 border-t lg:border-t-0 lg:border-l border-slate-800/90 p-6 flex flex-col justify-between h-full backdrop-blur-2xl">
-          <div>
-            <div className="text-[11px] font-mono text-slate-400 uppercase tracking-widest font-bold pb-3 border-b border-slate-800/80 flex items-center justify-between">
+        <div className="lg:col-span-4 bg-[#07090f]/75 border-t lg:border-t-0 lg:border-l border-slate-800/80 p-6 flex flex-col justify-between h-full backdrop-blur-2xl relative">
+          <div className="absolute inset-0 bg-[#090b12]/30 pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="text-[11px] font-mono text-slate-400 uppercase tracking-widest font-bold pb-3.5 border-b border-slate-850 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <FileCode className="w-4 h-4 text-indigo-400" />
                 Live Conversation Stream
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold animate-pulse">
                 ACTIVE
               </span>
             </div>
@@ -561,22 +618,22 @@ export default function InterviewPage() {
                 const isAI = msg.sender === 'interviewer';
                 return (
                   <div key={msg.id} className="space-y-1.5 text-left text-xs leading-relaxed font-sans">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                    <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
                       <span className={isAI ? 'text-indigo-400 font-bold flex items-center gap-1' : 'text-cyan-400 font-bold flex items-center gap-1'}>
-                        {isAI ? <Bot className="w-3 h-3 text-indigo-400" /> : <User className="w-3 h-3 text-cyan-400" />}
+                        {isAI ? <Bot className="w-3.5 h-3.5 text-indigo-450" /> : <User className="w-3.5 h-3.5 text-cyan-455" />}
                         {isAI ? persona.name : 'Candidate'}
                       </span>
                       <span>{msg.timestamp}</span>
                     </div>
 
-                    <div className={`p-4 rounded-2xl ${
+                    <div className={`p-4 rounded-2xl border ${
                       isAI 
-                        ? 'bg-slate-900/80 text-slate-200 border border-slate-800/90 shadow-md' 
-                        : 'bg-indigo-950/40 text-indigo-100 border border-indigo-500/30 shadow-md'
+                        ? 'bg-gradient-to-r from-slate-900/90 to-[#101424]/90 border-indigo-500/15 text-slate-200 shadow-[0_4px_20px_rgba(99,102,241,0.04)]' 
+                        : 'bg-gradient-to-r from-[#0d162a]/90 to-[#0e1f37]/90 border-cyan-500/20 text-slate-100 shadow-[0_4px_20px_rgba(6,182,212,0.03)]'
                     }`}>
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                       {msg.code_snippet && (
-                        <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950 font-mono text-[11px] text-cyan-300 overflow-x-auto border border-slate-800">
+                        <div className="mt-2.5 p-3 rounded-xl bg-slate-950 font-mono text-[11px] text-cyan-300 overflow-x-auto border border-slate-800">
                           <code>{msg.code_snippet}</code>
                         </div>
                       )}
@@ -584,18 +641,38 @@ export default function InterviewPage() {
                   </div>
                 );
               })}
+              
+              {/* Submission visual state simulator */}
+              {submitting && (
+                <div className="space-y-1.5 text-left text-xs font-sans">
+                  <div className="flex items-center justify-between text-[9px] font-mono text-slate-500">
+                    <span className="text-indigo-400 font-bold flex items-center gap-1">
+                      <Bot className="w-3.5 h-3.5 text-indigo-455" />
+                      {persona.name}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 to-[#101424]/90 border border-indigo-500/15 text-slate-400 flex items-center gap-2 shadow-md">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                    </div>
+                    <span className="font-mono text-[10px] text-slate-500">Analyzing answer technical depth...</span>
+                  </div>
+                </div>
+              )}
+              
               <div ref={chatEndRef} />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-800/80 text-[10px] font-mono text-slate-500 text-center flex items-center justify-between">
-            <span>Bit-Interview Live Engine v2.0</span>
+          <div className="pt-3 border-t border-slate-850 text-[10px] font-mono text-slate-500 text-center flex items-center justify-between relative z-10">
+            <span>Bit-Interview Engine v2.0</span>
             <span className="text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Encrypted Session
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Secure Live Feed
             </span>
           </div>
         </div>
-
       </div>
     </div>
   );

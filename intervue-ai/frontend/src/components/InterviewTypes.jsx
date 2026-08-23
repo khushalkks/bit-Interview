@@ -49,7 +49,7 @@ export default function InterviewTypes() {
   ];
 
   return (
-    <section id="interview-types" className="py-28 bg-[#080c14] relative overflow-hidden">
+    <section id="interview-types" className="py-28 bg-[#030712] relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <span className="text-xs font-mono font-bold tracking-widest text-indigo-300 uppercase bg-indigo-500/15 border border-indigo-500/30 px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow-lg shadow-indigo-500/10">

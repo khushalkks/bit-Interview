@@ -16,9 +16,9 @@ export default function Features() {
   ];
 
   return (
-    <section id="features" className="py-28 bg-[#080c14] relative overflow-hidden">
+    <section id="features" className="py-28 bg-[#030712] relative overflow-hidden">
       {/* Glow Ambient background lighting */}
-      <div className="absolute top-1/4 left-10 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[180px] pointer-events-none" />
+      <div className="absolute top-1/4 left-10 w-[600px] h-[600px] bg-sky-500/10 rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

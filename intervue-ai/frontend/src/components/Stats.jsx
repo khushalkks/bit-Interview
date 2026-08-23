@@ -35,7 +35,7 @@ export default function Stats() {
   ];
 
   return (
-    <section className="py-20 bg-[#090d16] border-y border-slate-800/80 relative overflow-hidden">
+    <section className="py-20 bg-[#030712] border-y border-slate-800/80 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, idx) => {

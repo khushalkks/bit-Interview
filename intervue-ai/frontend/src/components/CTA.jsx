@@ -11,7 +11,7 @@ export default function CTA() {
   };
 
   return (
-    <section className="py-28 bg-[#080c14] relative overflow-hidden">
+    <section className="py-28 bg-[#030712] relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="relative rounded-3xl p-8 sm:p-16 bg-[#0f172a]/95 border border-slate-800 shadow-2xl overflow-hidden text-center group hover:border-indigo-500/60 transition-all duration-300">
           {/* Background Ambient Glow */}
