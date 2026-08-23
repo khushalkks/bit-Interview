@@ -23,21 +23,17 @@
 
 <div align="center">
 
-### 1️⃣ Dynamic 3D Adaptive AI Landing Portal
-*Featuring active 3D perspective synapses background and cartoon 3D illustration hero mockup.*
-![Bit-Interview Landing Page](docs/images/landing_hero.png)
+### 1️⃣ Next-Gen AI Landing & 3D Interactive Showcase
+![Bit-Interview Landing Page](intervue-ai/docs/images/landing_hero_cartoon.png)
 
-### 2️⃣ Secure Candidate & Recruiter Access Portal
-*Clean multi-role authentication interface with social identity providers.*
-![Authentication Welcome Back](docs/images/login_welcome.png)
+### 2️⃣ Candidate Portal Authentication Gateway
+![Secure Candidate Login Portal](intervue-ai/docs/images/candidate_login.png)
 
-### 3️⃣ Interactive Session Configuration Wizard
-*Seamless step-by-step interview track and parameter setup.*
-![Configure Your AI Simulation](docs/images/how_it_works_tracks.png)
+### 3️⃣ Candidate Readiness & Progress Dashboard
+![Candidate Diagnostics Dashboard](intervue-ai/docs/images/candidate_dashboard.png)
 
-### 4️⃣ Live Candidate Control Center & Performance Dashboard
-*Dynamic readiness trajectories, skill breakdown radars, and session logs.*
-![Candidate Dashboard & Skill Radar](docs/images/dashboard_analytics.png)
+### 4️⃣ Stateful Session Setup Wizard
+![Stateful Setup Wizard Modal](intervue-ai/docs/images/setup_wizard.png)
 
 </div>
 
@@ -181,42 +177,44 @@ graph TD
 ## 📁 Project Directory Structure
 
 ```text
-intervue-ai/
-├── docs/
-│   └── images/                     # Screenshots & Diagrams
-│       ├── landing_hero.png
-│       ├── how_it_works_tracks.png
-│       ├── adaptive_ai_room.png
-│       └── dashboard_analytics.png
-│
-├── frontend/                       # React 19 + Vite Frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── DashboardNavbar.jsx         # Frosted Light Mode Navbar
-│   │   │   ├── VoiceInterviewerControls.jsx# Speech-to-Text & Narration
-│   │   │   ├── MonacoCodeEditor.jsx        # In-browser Code IDE
-│   │   │   ├── ProctoringWidget.jsx        # Anti-Cheat Audit Monitor
-│   │   │   └── AnalyticsCharts.jsx         # Radar & Trajectory Visualizers
-│   │   ├── pages/
-│   │   │   ├── DashboardPage.jsx           # Candidate Control Center
-│   │   │   ├── InterviewPage.jsx           # Live Adaptive AI Room
-│   │   │   ├── ResumePage.jsx              # Resume Intelligence Hub
-│   │   │   ├── JDAnalyzerPage.jsx          # ATS Resume & JD Matcher
-│   │   │   ├── InterviewReportPage.jsx     # Diagnostic Scorecard Report
-│   │   │   └── RecruiterDashboardPage.jsx  # Employer Leaderboard
-│   │   ├── index.css                       # Tailwind Design System Tokens
-│   │   └── App.jsx                         # Main Router Setup
-│   └── package.json
-│
-└── backend/                        # FastAPI + LangGraph Backend
-    ├── app/
-    │   ├── main.py                     # API Application Entrypoint
-    │   ├── routes/                     # Interview, Resume, JD & Recruiter Endpoints
-    │   ├── services/                   # LangGraph Agent, PyMuPDF & LLM Services
-    │   ├── core/                       # Security, JWT & Config Setup
-    │   └── models/                     # MongoDB Pydantic Data Models
-    ├── requirements.txt
-    └── .env.example
+interview/
+├── README.md                           # Master Project Documentation
+└── intervue-ai/
+    ├── docs/
+    │   └── images/                     # Screenshots & Diagrams
+    │       ├── landing_hero_cartoon.png
+    │       ├── candidate_login.png
+    │       ├── candidate_dashboard.png
+    │       └── setup_wizard.png
+    │
+    ├── frontend/                       # React 19 + Vite Frontend
+    │   ├── src/
+    │   │   ├── components/
+    │   │   │   ├── DashboardNavbar.jsx         # Frosted Light Mode Navbar
+    │   │   │   ├── VoiceInterviewerControls.jsx# Speech-to-Text & Narration
+    │   │   │   ├── MonacoCodeEditor.jsx        # In-browser Code IDE
+    │   │   │   ├── ProctoringWidget.jsx        # Anti-Cheat Audit Monitor
+    │   │   │   └── AnalyticsCharts.jsx         # Radar & Trajectory Visualizers
+    │   │   ├── pages/
+    │   │   │   ├── DashboardPage.jsx           # Candidate Control Center
+    │   │   │   ├── InterviewPage.jsx           # Live Adaptive AI Room
+    │   │   │   ├── ResumePage.jsx              # Resume Intelligence Hub
+    │   │   │   ├── JDAnalyzerPage.jsx          # ATS Resume & JD Matcher
+    │   │   │   ├── InterviewReportPage.jsx     # Diagnostic Scorecard Report
+    │   │   │   └── RecruiterDashboardPage.jsx  # Employer Leaderboard
+    │   │   ├── index.css                       # Tailwind Design System Tokens
+    │   │   └── App.jsx                         # Main Router Setup
+    │   └── package.json
+    │
+    └── backend/                        # FastAPI + LangGraph Backend
+        ├── app/
+        │   ├── main.py                     # API Application Entrypoint
+        │   ├── routes/                     # Interview, Resume, JD & Recruiter Endpoints
+        │   ├── services/                   # LangGraph Agent, PyMuPDF & LLM Services
+        │   ├── core/                       # Security, JWT & Config Setup
+        │   └── models/                     # MongoDB Pydantic Data Models
+        ├── requirements.txt
+        └── .env.example
 ```
 
 ---
@@ -243,7 +241,7 @@ CORS_ORIGIN=http://localhost:5173
 
 ### 2. Backend Installation & Launch
 ```bash
-cd backend
+cd intervue-ai/backend
 
 # Create virtual environment
 python -m venv venv
@@ -264,7 +262,7 @@ Backend API will be running live at `http://localhost:8000`.
 
 ### 3. Frontend Installation & Launch
 ```bash
-cd frontend
+cd intervue-ai/frontend
 
 # Install dependencies
 npm install

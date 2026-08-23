@@ -23,21 +23,17 @@
 
 <div align="center">
 
-### 1️⃣ Dynamic 3D Adaptive AI Landing Portal
-*Featuring active 3D perspective synapses background and cartoon 3D illustration hero mockup.*
-![Bit-Interview Landing Page](intervue-ai/docs/images/landing_hero.png)
+### 1️⃣ Next-Gen AI Landing & 3D Interactive Showcase
+![Bit-Interview Landing Page](intervue-ai/docs/images/landing_hero_cartoon.png)
 
-### 2️⃣ Secure Candidate & Recruiter Access Portal
-*Clean multi-role authentication interface with social identity providers.*
-![Authentication Welcome Back](intervue-ai/docs/images/login_welcome.png)
+### 2️⃣ Candidate Portal Authentication Gateway
+![Secure Candidate Login Portal](intervue-ai/docs/images/candidate_login.png)
 
-### 3️⃣ Interactive Session Configuration Wizard
-*Seamless step-by-step interview track and parameter setup.*
-![Configure Your AI Simulation](intervue-ai/docs/images/how_it_works_tracks.png)
+### 3️⃣ Candidate Readiness & Progress Dashboard
+![Candidate Diagnostics Dashboard](intervue-ai/docs/images/candidate_dashboard.png)
 
-### 4️⃣ Live Candidate Control Center & Performance Dashboard
-*Dynamic readiness trajectories, skill breakdown radars, and session logs.*
-![Candidate Dashboard & Skill Radar](intervue-ai/docs/images/dashboard_analytics.png)
+### 4️⃣ Stateful Session Setup Wizard
+![Stateful Setup Wizard Modal](intervue-ai/docs/images/setup_wizard.png)
 
 </div>
 
@@ -186,10 +182,10 @@ interview/
 └── intervue-ai/
     ├── docs/
     │   └── images/                     # Screenshots & Diagrams
-    │       ├── landing_hero.png
-    │       ├── how_it_works_tracks.png
-    │       ├── adaptive_ai_room.png
-    │       └── dashboard_analytics.png
+    │       ├── landing_hero_cartoon.png
+    │       ├── candidate_login.png
+    │       ├── candidate_dashboard.png
+    │       └── setup_wizard.png
     │
     ├── frontend/                       # React 19 + Vite Frontend
     │   ├── src/
