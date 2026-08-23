@@ -23,16 +23,20 @@
 
 <div align="center">
 
-### 1️⃣ Next-Gen AI Landing & Product Showcase
+### 1️⃣ Dynamic 3D Adaptive AI Landing Portal
+*Featuring active 3D perspective synapses background and cartoon 3D illustration hero mockup.*
 ![Bit-Interview Landing Page](intervue-ai/docs/images/landing_hero.png)
 
-### 2️⃣ Tailored Practice Tracks & 4-Step Process
-![How Bit-Interview Works & Practice Tracks](intervue-ai/docs/images/how_it_works_tracks.png)
+### 2️⃣ Secure Candidate & Recruiter Access Portal
+*Clean multi-role authentication interface with social identity providers.*
+![Authentication Welcome Back](intervue-ai/docs/images/login_welcome.png)
 
-### 3️⃣ Adaptive AI Room — Voice Narration, Monaco Code Editor & Anti-Cheat Monitor
-![Adaptive AI Interview Room](intervue-ai/docs/images/adaptive_ai_room.png)
+### 3️⃣ Interactive Session Configuration Wizard
+*Seamless step-by-step interview track and parameter setup.*
+![Configure Your AI Simulation](intervue-ai/docs/images/how_it_works_tracks.png)
 
-### 4️⃣ Candidate Analytics & Readiness Trajectory Dashboard
+### 4️⃣ Live Candidate Control Center & Performance Dashboard
+*Dynamic readiness trajectories, skill breakdown radars, and session logs.*
 ![Candidate Dashboard & Skill Radar](intervue-ai/docs/images/dashboard_analytics.png)
 
 </div>
