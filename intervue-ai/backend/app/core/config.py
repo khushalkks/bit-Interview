@@ -18,6 +18,7 @@ class Settings:
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "https://bit-interview.vercel.app",
     ]
     
     # Load CORS origins from environment variable if set
@@ -32,5 +33,8 @@ class Settings:
                 CORS_ORIGINS = [_env_cors]
         except json.JSONDecodeError:
             CORS_ORIGINS = [o.strip() for o in _env_cors.split(",") if o.strip()]
+
+    # Normalize origins by stripping trailing slashes
+    CORS_ORIGINS = [origin.rstrip("/") for origin in CORS_ORIGINS]
 
 settings = Settings()
