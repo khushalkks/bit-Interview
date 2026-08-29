@@ -36,5 +36,10 @@ class Settings:
 
     # Normalize origins by stripping trailing slashes
     CORS_ORIGINS = [origin.rstrip("/") for origin in CORS_ORIGINS]
+    
+    # Ensure production Vercel frontend is ALWAYS allowed
+    _prod_origin = "https://bit-interview.vercel.app"
+    if _prod_origin not in CORS_ORIGINS:
+        CORS_ORIGINS.append(_prod_origin)
 
 settings = Settings()
