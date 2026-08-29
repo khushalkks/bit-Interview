@@ -4,9 +4,13 @@ from typing import Optional, Any
 
 try:
     import redis
-    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_timeout=2)
+    REDIS_URL = os.getenv("REDIS_URL")
+    if REDIS_URL:
+        redis_client = redis.Redis.from_url(REDIS_URL, socket_timeout=2, socket_connect_timeout=2)
+    else:
+        REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+        REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_timeout=2, socket_connect_timeout=2)
     redis_client.ping()
     IS_REDIS_CONNECTED = True
     print("Successfully connected to Redis Cache Server!")
