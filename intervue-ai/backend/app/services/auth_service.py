@@ -42,6 +42,43 @@ class AuthService:
         return USERS_DB.get(user_id)
 
     @staticmethod
+    def get_or_create_supabase_user(payload: dict) -> dict:
+        """Retrieve or auto-provision a user from a Supabase OAuth JWT token"""
+        user_id = str(payload.get("sub", ""))
+        if not user_id:
+            raise ValueError("Token missing user subject")
+        
+        user = USERS_DB.get(user_id)
+        if user:
+            return user
+        
+        email = payload.get("email") or f"{user_id[:8]}@oauth.user"
+        existing = AuthService.get_by_email(email)
+        if existing:
+            USERS_DB[user_id] = existing
+            return existing
+
+        user_metadata = payload.get("user_metadata", {}) or {}
+        name = (
+            user_metadata.get("full_name") or 
+            user_metadata.get("name") or 
+            email.split("@")[0] or 
+            "Candidate"
+        )
+        target_role = user_metadata.get("target_role") or "Full Stack Engineer"
+        
+        new_user = {
+            "id": user_id,
+            "name": name,
+            "email": email.strip().lower(),
+            "password_hash": "oauth_managed",
+            "target_role": target_role,
+            "created_at": datetime.now().isoformat()
+        }
+        USERS_DB[user_id] = new_user
+        return new_user
+
+    @staticmethod
     def register_user(data: UserRegister) -> dict:
         existing = AuthService.get_by_email(data.email)
         if existing:

@@ -16,8 +16,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Invalid or expired authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user_id = payload["sub"]
+    user_id = str(payload["sub"])
     user = AuthService.get_by_id(user_id)
+    if not user:
+        # Check if this token was issued via Supabase OAuth or social login
+        try:
+            user = AuthService.get_or_create_supabase_user(payload)
+        except Exception:
+            user = None
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

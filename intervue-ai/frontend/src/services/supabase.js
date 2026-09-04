@@ -10,7 +10,13 @@ const supabaseAnonKey =
   import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
   'sb_publishable_IQh5RvTfih1C_c7Xaop6bQ_5Qri5Ncl';
 
-export const isSupabaseConfigured = false;
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl && 
+  supabaseAnonKey &&
+  !supabaseUrl.includes('placeholder') &&
+  !supabaseUrl.includes('your-project') &&
+  !supabaseAnonKey.includes('placeholder')
+);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
