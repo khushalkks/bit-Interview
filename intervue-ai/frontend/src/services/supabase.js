@@ -1,28 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 
+const rawUrl = 
   import.meta.env.VITE_SUPABASE_URL || 
   import.meta.env.NEXT_PUBLIC_SUPABASE_URL || 
-  'https://pgtpdrylvdssinnnlkuz.supabase.co';
+  '';
 
-const supabaseAnonKey = 
+const rawKey = 
   import.meta.env.VITE_SUPABASE_ANON_KEY || 
   import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 
-  'sb_publishable_IQh5RvTfih1C_c7Xaop6bQ_5Qri5Ncl';
+  '';
 
+// Check if a real, live Supabase project is configured (pgtpdrylvdssinnnlkuz was a non-resolvable dummy domain)
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseAnonKey &&
-  !supabaseUrl.includes('placeholder') &&
-  !supabaseUrl.includes('your-project') &&
-  !supabaseAnonKey.includes('placeholder')
+  rawUrl && 
+  rawKey &&
+  !rawUrl.includes('placeholder') &&
+  !rawUrl.includes('your-project') &&
+  !rawUrl.includes('pgtpdrylvdssinnnlkuz') &&
+  !rawKey.includes('placeholder')
 );
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const safeUrl = isSupabaseConfigured ? rawUrl : 'https://placeholder.supabase.co';
+const safeKey = isSupabaseConfigured ? rawKey : 'placeholder-anon-key';
+
+export const supabase = createClient(safeUrl, safeKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+    persistSession: isSupabaseConfigured,
+    autoRefreshToken: isSupabaseConfigured,
+    detectSessionInUrl: isSupabaseConfigured,
   },
 });
-

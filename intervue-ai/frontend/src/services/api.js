@@ -50,6 +50,12 @@ export const authAPI = {
     }),
 
   getMe: () => apiFetch('/auth/me'),
+
+  oauthMock: (provider = 'google', email = null, name = null) =>
+    apiFetch('/auth/oauth/mock', {
+      method: 'POST',
+      body: JSON.stringify({ provider, email, name }),
+    }),
 };
 
 export const dashboardAPI = {

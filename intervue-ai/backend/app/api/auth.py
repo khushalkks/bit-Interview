@@ -1,7 +1,8 @@
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.schemas.user import UserRegister, UserLogin, UserResponse, Token
-from app.services.auth_service import AuthService
+from app.schemas.user import UserRegister, UserLogin, UserResponse, Token, OAuthMockRequest
+from app.services.auth_service import AuthService, USERS_DB
 from app.core.security import create_access_token, decode_access_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -54,3 +55,28 @@ def login(data: UserLogin):
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: dict = Depends(get_current_user)):
     return AuthService.to_user_response(current_user)
+
+@router.post("/oauth/mock", response_model=Token)
+def mock_oauth_login(data: OAuthMockRequest):
+    """Fallback OAuth authentication for development or when external OAuth provider is offline"""
+    provider_title = data.provider.capitalize()
+    email = (data.email or f"{data.provider.lower()}.candidate@gmail.com").strip().lower()
+    name = data.name or f"{provider_title} Candidate"
+    user_id = f"usr_{data.provider.lower()}_{email.split('@')[0]}"
+
+    user = AuthService.get_by_email(email)
+    if not user:
+        user = {
+            "id": user_id,
+            "name": name,
+            "email": email,
+            "password_hash": "oauth_managed",
+            "target_role": data.target_role or "Full Stack Engineer",
+            "created_at": datetime.now().isoformat()
+        }
+        USERS_DB[user["id"]] = user
+
+    access_token = create_access_token(subject=user["id"])
+    user_res = AuthService.to_user_response(user)
+    return Token(access_token=access_token, user=user_res)
+

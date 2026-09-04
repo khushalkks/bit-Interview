@@ -35,8 +35,12 @@ export default function LoginPage() {
 
   const handleOAuthLogin = async (provider) => {
     setError('');
+    setIsSubmitting(true);
     try {
-      await loginWithOAuth(provider);
+      const user = await loginWithOAuth(provider);
+      if (user) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       console.error('OAuth Login Error:', err);
       if (err.message && err.message.toLowerCase().includes('not enabled')) {
@@ -44,6 +48,8 @@ export default function LoginPage() {
       } else {
         setError(err.message || 'Failed to initialize social login.');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -12,6 +12,12 @@ class UserLogin(BaseModel):
     email: str = Field(..., example="khushal@example.com")
     password: str = Field(..., example="password123")
 
+class OAuthMockRequest(BaseModel):
+    provider: str = Field(default="google", example="google")
+    email: Optional[str] = Field(default=None, example="candidate@gmail.com")
+    name: Optional[str] = Field(default=None, example="Google Candidate")
+    target_role: Optional[str] = Field(default="Full Stack Engineer", example="Full Stack Engineer")
+
 class UserResponse(BaseModel):
     id: str
     name: str
