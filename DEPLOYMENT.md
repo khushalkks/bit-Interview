@@ -25,6 +25,8 @@ In the Render dashboard, go to the **Environment** tab and add the following key
 - `REDIS_URL`: Your Redis connection string (e.g. `redis://...` from Redis Labs or Render Redis).
 - `GEMINI_API_KEY`: Your Google Gemini API Key.
 - `CORS_ORIGIN`: Your deployed Vercel frontend URL (e.g. `https://your-app-name.vercel.app`).
+- `SUPABASE_URL`: Your Supabase project URL (e.g. `https://pgtpdrylvdssinnnlkuz.supabase.co`).
+- `SUPABASE_ANON_KEY`: Your Supabase publishable / anon public key.
 - `OPENAI_API_KEY`: (Optional) Your OpenAI API Key.
 - `JUDGE0_URL`: (Optional) Remote Judge0 API Host.
 
@@ -46,6 +48,8 @@ Click **Save Changes** and wait for the service to deploy. Copy the deployed ser
 ### Step 2: Configure Environment Variables
 Expand the **Environment Variables** section and add:
 - `VITE_API_URL`: Your deployed Render backend API URL with the `/api` suffix (e.g., `https://bit-interview-backend.onrender.com/api`).
+- `VITE_SUPABASE_URL`: Your Supabase Project URL (e.g. `https://pgtpdrylvdssinnnlkuz.supabase.co`).
+- `VITE_SUPABASE_ANON_KEY`: Your Supabase publishable / anon key.
 
 Click **Deploy**. Vercel will automatically build the bundle and host it at a production URL.
 
