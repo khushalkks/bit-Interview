@@ -6,7 +6,7 @@ import tempfile
 import os
 import contextlib
 import httpx
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from app.schemas.coding import CodeExecutionRequest, CodeExecutionResponse, TestCaseResult
 
 JUDGE0_API_URL = os.getenv("JUDGE0_URL", "https://judge0-ce.p.rapidapi.com")
@@ -91,19 +91,26 @@ class CodeExecutionEngine:
             )
 
     @staticmethod
-    async def execute_code(req: CodeExecutionRequest) -> CodeExecutionResponse:
+    async def execute_code(req: Union[CodeExecutionRequest, str], language: Optional[str] = None) -> CodeExecutionResponse:
         """Execute candidate code snippet via local runner or Judge0 API"""
-        lang = req.language.lower()
+        if isinstance(req, str):
+            code_text = req
+            lang = (language or "python").lower()
+            test_cases = None
+        else:
+            code_text = req.code
+            lang = req.language.lower()
+            test_cases = req.test_cases
 
         if lang == "python":
-            return CodeExecutionEngine.execute_python_code(req.code, req.test_cases)
+            return CodeExecutionEngine.execute_python_code(code_text, test_cases)
 
         # Local Node.js execution fallback if available
         if lang in ["javascript", "js"]:
             try:
                 start_time = time.time()
                 proc = subprocess.run(
-                    ["node", "-e", req.code],
+                    ["node", "-e", code_text],
                     capture_output=True,
                     text=True,
                     timeout=4

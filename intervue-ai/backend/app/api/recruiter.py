@@ -12,7 +12,7 @@ def analyze_job_description(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        if not payload.jd_text.trim() if hasattr(payload.jd_text, 'trim') else not payload.jd_text.strip():
+        if not payload.jd_text or not payload.jd_text.strip():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Job description text cannot be empty.")
         
         analysis = JDService.analyze_jd(

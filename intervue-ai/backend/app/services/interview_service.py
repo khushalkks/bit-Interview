@@ -7,6 +7,7 @@ from app.schemas.interview import (
 )
 from app.services.resume_service import RESUMES_DB
 from app.ai.langgraph_agent import LangGraphInterviewState, LangGraphAdaptiveAgent
+from app.db.mongodb import MongoDBManager
 
 # In-memory store for active & completed interview sessions
 SESSIONS_DB: Dict[str, dict] = {}
@@ -152,6 +153,7 @@ class InterviewService:
         }
 
         SESSIONS_DB[session_id] = session_data
+        MongoDBManager.insert_document("interviews", session_id, session_data)
 
         return InterviewSessionResponse(
             session_id=session_id,
@@ -253,6 +255,7 @@ class InterviewService:
         session["langgraph_state"] = state.to_dict()
         ai_msg = InterviewMessage(**ai_msg_dict)
         session["messages"].append(ai_msg.dict())
+        MongoDBManager.insert_document("interviews", session["session_id"], session)
 
         return InterviewSessionResponse(
             session_id=session["session_id"],
@@ -491,18 +494,27 @@ class InterviewService:
         )
 
         session["summary"] = summary.dict()
+        MongoDBManager.insert_document("interviews", session_id, session)
+        MongoDBManager.insert_document("reports", session_id, summary.dict())
         return summary
 
     @staticmethod
     def get_session_summary(user_id: str, session_id: str) -> InterviewSummaryResponse:
-        session = SESSIONS_DB.get(session_id)
+        session = SESSIONS_DB.get(session_id) or MongoDBManager.find_document("interviews", session_id)
         
-        # If session exists in memory, return its calculated summary
+        # If session exists, verify user and return its calculated summary
         if session:
+            if session.get("user_id") != user_id:
+                raise ValueError("Interview session not found or unauthorized.")
             summary_dict = session.get("summary")
             if summary_dict:
                 return InterviewSummaryResponse(**summary_dict)
             return InterviewService.end_session(user_id, session_id)
+
+        # Check if saved in reports collection
+        saved_report = MongoDBManager.find_document("reports", session_id)
+        if saved_report:
+            return InterviewSummaryResponse(**saved_report)
 
         # High-fidelity real-world production sample reports for demonstration & recruiter review
         if "stripe" in session_id or session_id == "sess_stripe_01":
@@ -620,9 +632,12 @@ class InterviewService:
 
     @staticmethod
     def get_session(user_id: str, session_id: str) -> InterviewSessionResponse:
-        session = SESSIONS_DB.get(session_id)
-        if not session or session["user_id"] != user_id:
+        session = SESSIONS_DB.get(session_id) or MongoDBManager.find_document("interviews", session_id)
+        if not session or session.get("user_id") != user_id:
             raise ValueError("Interview session not found.")
+        
+        if session_id not in SESSIONS_DB:
+            SESSIONS_DB[session_id] = session
         
         return InterviewSessionResponse(
             session_id=session["session_id"],
@@ -638,18 +653,27 @@ class InterviewService:
 
     @staticmethod
     def get_user_history(user_id: str) -> List[dict]:
+        all_sessions = list(SESSIONS_DB.values())
+        mongo_sessions = MongoDBManager.find_all("interviews", {"user_id": user_id})
+        seen_ids = set()
+        combined = []
+        for s in all_sessions + mongo_sessions:
+            sid = s.get("session_id")
+            if sid and sid not in seen_ids and s.get("user_id") == user_id:
+                seen_ids.add(sid)
+                combined.append(s)
+
         user_sessions = [
             {
                 "session_id": s["session_id"],
-                "track_title": s["track_title"],
-                "target_role": s["target_role"],
-                "status": s["status"],
-                "started_at": s["started_at"],
-                "question_count": s["question_count"],
-                "score": s.get("summary", {}).get("overall_score")
+                "track_title": s.get("track_title", "Technical Round"),
+                "target_role": s.get("target_role", "Software Engineer"),
+                "status": s.get("status", "completed"),
+                "started_at": s.get("started_at", ""),
+                "question_count": s.get("question_count", 1),
+                "score": s.get("summary", {}).get("overall_score") if isinstance(s.get("summary"), dict) else None
             }
-            for s in SESSIONS_DB.values()
-            if s["user_id"] == user_id
+            for s in combined
         ]
         return sorted(user_sessions, key=lambda x: x["started_at"], reverse=True)
 

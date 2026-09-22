@@ -35,8 +35,15 @@ class MLReadinessAnalytics:
             }
 
         # Calculate using session history scores
-        scores = [s.get("score") or 80 for s in session_history]
-        scores_arr = np.array(scores)
+        scores = []
+        for s in session_history:
+            sc = s.get("score") if isinstance(s, dict) else s
+            try:
+                scores.append(float(sc) if sc is not None else 80.0)
+            except (ValueError, TypeError):
+                scores.append(80.0)
+
+        scores_arr = np.array(scores, dtype=float)
         
         overall = int(np.mean(scores_arr))
         

@@ -10,7 +10,7 @@ class Settings:
     VERSION: str = "1.0.0"
     API_PREFIX: str = "/api"
     
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "bit-interview-super-secret-key-change-in-production-2026")
+    SECRET_KEY: str = os.getenv("JWT_SECRET") or os.getenv("SECRET_KEY", "bit-interview-super-secret-key-change-in-production-2026")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     

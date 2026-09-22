@@ -6,7 +6,20 @@ from datetime import datetime
 
 class LangGraphInterviewState:
     """State schema for LangGraph agent node transitions"""
-    def __init__(self, session_id: str, track: str, target_role: str, initial_difficulty: str = "Medium", candidate_name: str = "Candidate", matched_skills: List[str] = None, skill_gaps: List[str] = None, company_name: str = "Target Company", persona: str = "Sarah", duration: str = "30 min", target_level: str = "Senior SWE"):
+    def __init__(
+        self,
+        session_id: str,
+        track: str,
+        target_role: str,
+        initial_difficulty: str = "Medium",
+        candidate_name: str = "Candidate",
+        matched_skills: Optional[List[str]] = None,
+        skill_gaps: Optional[List[str]] = None,
+        company_name: str = "Target Company",
+        persona: str = "Sarah",
+        duration: str = "30 min",
+        target_level: str = "Senior SWE"
+    ):
         self.session_id = session_id
         self.track = track
         self.target_role = target_role
@@ -16,8 +29,8 @@ class LangGraphInterviewState:
         self.persona = persona
         self.duration = duration
         self.target_level = target_level
-        self.matched_skills = matched_skills or ["Python", "JavaScript", "React", "REST APIs"]
-        self.skill_gaps = skill_gaps or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
+        self.matched_skills = matched_skills if matched_skills is not None else ["Python", "JavaScript", "React", "REST APIs"]
+        self.skill_gaps = skill_gaps if skill_gaps is not None else ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"]
         self.step_index = 0
         self.stage = "ICEBREAKER" # ICEBREAKER -> INTRO -> RESUME_DEEP_DIVE -> JD_SKILL_GAPS -> TECHNICAL_CODING -> ADAPTIVE_FOLLOWUP
         self.messages: List[dict] = []
@@ -52,6 +65,8 @@ class LangGraphInterviewState:
 
     @classmethod
     def from_dict(cls, data: dict):
+        if not isinstance(data, dict):
+            data = {}
         state = cls(
             session_id=data.get("session_id", ""),
             track=data.get("track", "technical"),
@@ -59,19 +74,19 @@ class LangGraphInterviewState:
             initial_difficulty=data.get("current_difficulty", "Medium"),
             candidate_name=data.get("candidate_name", "Candidate"),
             company_name=data.get("company_name", "Target Company"),
-            matched_skills=data.get("matched_skills"),
-            skill_gaps=data.get("skill_gaps"),
+            matched_skills=data.get("matched_skills") or ["Python", "JavaScript", "React", "REST APIs"],
+            skill_gaps=data.get("skill_gaps") or ["Microservices Architecture", "Redis Eviction", "Kafka Event Streams"],
             persona=data.get("persona", "Sarah"),
             duration=data.get("duration", "30 min"),
             target_level=data.get("target_level", "Senior SWE")
         )
         state.step_index = data.get("step_index", 0)
         state.stage = data.get("stage", "ICEBREAKER")
-        state.messages = data.get("messages", [])
-        state.evaluations = data.get("evaluations", [])
-        state.topics_covered = data.get("topics_covered", [])
-        state.weak_topics = data.get("weak_topics", [])
-        state.strong_topics = data.get("strong_topics", [])
+        state.messages = data.get("messages") or []
+        state.evaluations = data.get("evaluations") or []
+        state.topics_covered = data.get("topics_covered") or []
+        state.weak_topics = data.get("weak_topics") or []
+        state.strong_topics = data.get("strong_topics") or []
         state.interruption_count = data.get("interruption_count", 0)
         return state
 
@@ -99,21 +114,27 @@ class LangGraphAdaptiveAgent:
 
         # Build prompt with conversation context
         messages_summary = []
-        for m in state.messages[-6:]:
-            sender = m.get("sender", "interviewer")
-            content = m.get("content", "")
+        for m in (state.messages or [])[-6:]:
+            if isinstance(m, dict):
+                sender = m.get("sender", "interviewer")
+                content = m.get("content", "")
+            else:
+                sender = getattr(m, "sender", "interviewer")
+                content = getattr(m, "content", "")
             if sender and content:
-                messages_summary.append(f"{sender.capitalize()}: {content[:250]}")
+                messages_summary.append(f"{str(sender).capitalize()}: {str(content)[:250]}")
         
         chat_history = "\n".join(messages_summary)
-        already_asked = "; ".join(state.topics_covered[-5:]) if state.topics_covered else "None"
+        already_asked = "; ".join((state.topics_covered or [])[-5:]) if state.topics_covered else "None"
+        matched_str = ', '.join((state.matched_skills or [])[:5]) or "General SWE"
+        gaps_str = ', '.join((state.skill_gaps or [])[:3]) or "Architecture"
         
         prompt = f"""You are an expert AI technical interviewer named {state.persona} conducting a {state.track} interview round for a {state.target_role} ({state.target_level}) position at {state.company_name}.
 Candidate Name: {state.candidate_name}
 Target Role: {state.target_role}
 Current Difficulty Level: {state.current_difficulty}
-Candidate Resume Skills: {', '.join(state.matched_skills[:5])}
-Skill Gaps to test: {', '.join(state.skill_gaps[:3])}
+Candidate Resume Skills: {matched_str}
+Skill Gaps to test: {gaps_str}
 
 Topics / Questions Already Covered (DO NOT REPEAT):
 {already_asked}
@@ -141,8 +162,15 @@ Return ONLY the response text."""
                 genai.configure(api_key=gemini_key)
                 model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(prompt)
-                if response and response.text:
-                    return response.text.strip()
+                if response:
+                    text_res = ""
+                    try:
+                        text_res = response.text
+                    except Exception:
+                        if hasattr(response, "candidates") and response.candidates and response.candidates[0].content.parts:
+                            text_res = response.candidates[0].content.parts[0].text
+                    if text_res and text_res.strip():
+                        return text_res.strip()
             except Exception as e:
                 print(f"[AI Agent] Gemini API call skipped/failed: {e}")
 
@@ -169,11 +197,15 @@ Return ONLY the response text."""
     @staticmethod
     def execute_question_node(state: LangGraphInterviewState, candidate_last_answer: str = "") -> dict:
         """Node 1: Tailored Question Generator Node using Candidate Resume + Track + Persona State"""
-        track = state.track
-        role = state.target_role
-        diff = state.current_difficulty
-        name = state.candidate_name
-        company = state.company_name
+        track_raw = state.track
+        track_str = track_raw.value if hasattr(track_raw, "value") else str(track_raw or "technical")
+        track_lower = track_str.lower()
+        track_name = track_str.replace("_", " ").title()
+
+        role = state.target_role or "Software Engineer"
+        diff = state.current_difficulty or "Medium"
+        name = state.candidate_name or "Candidate"
+        company = state.company_name or "Target Company"
         persona = state.persona or "Sarah"
         skills = state.matched_skills or ["Python", "React", "FastAPI", "REST API", "SQL"]
         gaps = state.skill_gaps or ["Distributed Caching", "Kafka Microservices", "System Scaling"]
@@ -194,16 +226,18 @@ Return ONLY the response text."""
         opener = persona_openers.get(persona, f"Hello {name}!")
 
         question_text = ""
+        if state.topics_covered is None:
+            state.topics_covered = []
 
         # STEP 0: ALWAYS START WITH CANDIDATE INTRODUCTION FOR ALL TRACKS ("Phele introduce karega")
         if step == 0:
             state.stage = "INTRO"
-            track_name = track.replace("_", " ").title()
             question_text = (
                 f"{opener} Welcome to your **{track_name}** round for the **{role}** position at **{company}**.\n\n"
                 f"To get started, please introduce yourself! Give me a brief summary of your technical background, "
                 f"and highlight 1-2 major projects or engineering challenges you've recently worked on."
             )
+            state.topics_covered.append("candidate_introduction")
 
         # STEP 1: FOLLOW UP ON INTRODUCTION & RESUME PROJECTS
         elif step == 1:
@@ -213,6 +247,7 @@ Return ONLY the response text."""
                 f"Could you walk me through the overall architecture of a key production system you built with **{top_skill}**? "
                 f"What core technical decisions, trade-offs, or database choices did you make during its design?"
             )
+            state.topics_covered.append("resume_system_architecture")
 
         # STEP 2+: ADAPTIVE DYNAMIC FOLLOW-UPS (LLM or Context-Aware Fallback Engine)
         else:
@@ -222,6 +257,7 @@ Return ONLY the response text."""
             if llm_question:
                 state.stage = "ADAPTIVE_LLM_QUESTION"
                 question_text = llm_question
+                state.topics_covered.append(f"llm_followup_step_{step}")
             else:
                 # 2. Dynamic Fallback Question Pool (Ensuring NO duplicate question is EVER repeated)
                 state.stage = f"ADAPTIVE_STEP_{step}"
@@ -254,13 +290,13 @@ Return ONLY the response text."""
                         f"To protect your downstream services from thundering herd attacks or API abuse, how would you implement a Token Bucket or Leaky Bucket rate limiter using Redis?"
                     ))
 
-                if track == "behavioral":
+                if track_lower == "behavioral":
                     topic_options.extend([
                         ("star_conflict", f"Using the **STAR method** (Situation, Task, Action, Result): Describe a situation where you had a strong disagreement with a team member over system architecture or code quality. How did you handle it and build alignment?"),
                         ("star_outage", f"Tell me about a high-stress production outage or P0 incident you managed. What immediate steps did you take to triage the bug, communicate with stakeholders, and prevent recurrence?"),
                         ("star_tech_debt", f"Describe a project where you had to compromise on technical debt to meet a tight deadline. How did you plan the refactoring later?")
                     ])
-                elif track == "system_design" or "system" in track:
+                elif track_lower == "system_design" or "system" in track_lower:
                     topic_options.extend([
                         ("design_caching", f"When designing high-throughput distributed systems, how do you structure your caching strategy (Cache-Aside vs Read-Through) and handle cache invalidation and stampede issues using **{gap_skill}**?"),
                         ("design_sharding", f"If write traffic scales 50x beyond single-database limits, how would you approach horizontal database sharding and cross-shard querying?"),
@@ -413,14 +449,20 @@ Return ONLY the response text."""
     @staticmethod
     def execute_scorecard_node(state: LangGraphInterviewState) -> dict:
         """Node 7: Scorecard Synthesizer Node"""
-        evals = state.evaluations
+        evals = state.evaluations or []
         if not evals:
             avg_acc = 15
             strengths = ["Attempted session initialization."]
             areas = ["No candidate answers submitted during the round."]
             feedback = "No responses recorded. Attempt questions with detailed technical reasoning to receive evaluation."
         else:
-            avg_acc = int(sum(e["accuracy_score"] for e in evals) / len(evals))
+            scores_list = []
+            for e in evals:
+                if isinstance(e, dict):
+                    scores_list.append(e.get("accuracy_score", 50))
+                else:
+                    scores_list.append(getattr(e, "accuracy_score", 50))
+            avg_acc = int(sum(scores_list) / max(1, len(scores_list)))
             if avg_acc < 45:
                 strengths = ["Attempted basic interview interactions."]
                 areas = [

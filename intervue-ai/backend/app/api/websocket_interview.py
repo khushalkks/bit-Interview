@@ -52,10 +52,11 @@ async def websocket_interview_endpoint(websocket: WebSocket, session_id: str):
                 code = data.get("code", "")
                 language = data.get("language", "python")
                 result = await CodeExecutionEngine.execute_code(code, language)
+                res_dict = result.dict() if hasattr(result, "dict") else (result.model_dump() if hasattr(result, "model_dump") else result)
                 
                 await websocket.send_json({
                     "type": "CODE_EXECUTION_RESULT",
-                    "result": result
+                    "result": res_dict
                 })
 
             elif action == "PING":
