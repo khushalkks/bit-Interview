@@ -43,11 +43,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('OAuth Login Error:', err);
-      if (err.message && err.message.toLowerCase().includes('not enabled')) {
-        setError(`${provider.toUpperCase()} Login is not toggled ON in your Supabase Dashboard yet. Enable Google in Supabase -> Authentication -> Providers, or use Email / Demo login!`);
-      } else {
-        setError(err.message || 'Failed to initialize social login.');
-      }
+      setError(err.message || 'Failed to initialize social login.');
     } finally {
       setIsSubmitting(false);
     }
@@ -397,11 +393,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Supabase Social OAuth Section */}
+            {/* Social OAuth Section */}
             <div className="pt-2 space-y-2">
               <div className="relative text-center">
                 <span className="bg-slate-900 px-3 text-[10px] text-slate-500 font-mono uppercase tracking-wider">
-                  Or continue with Supabase Auth
+                  Or continue with Social Login
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
