@@ -5,16 +5,26 @@ from datetime import datetime
 try:
     from pymongo import MongoClient
     MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=2000)
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
     # Test connection
     client.admin.command('ping')
-    db = client["bit_interview_db"]
+    try:
+        db = client.get_default_database()
+    except Exception:
+        db = None
+    if db is None or db.name in ["test", "admin"]:
+        db = client["bit_interview_db"]
     IS_MONGO_CONNECTED = True
     print("Successfully connected to MongoDB Database!")
+    try:
+        # Ensure email index on users collection
+        db["users"].create_index("email", unique=True, sparse=True)
+    except Exception as idx_err:
+        print(f"Index creation note: {idx_err}")
 except Exception as e:
     IS_MONGO_CONNECTED = False
     db = None
-    print(f"MongoDB not available locally ({e}). Using resilient in-memory database store.")
+    print(f"MongoDB not available ({e}). Using resilient in-memory database store.")
 
 # In-memory document store fallback
 IN_MEMORY_COLLECTIONS: Dict[str, Dict[str, dict]] = {
@@ -61,6 +71,28 @@ class MongoDBManager:
 
         # Fallback in-memory
         return IN_MEMORY_COLLECTIONS.get(collection_name, {}).get(doc_id)
+
+    @staticmethod
+    def find_one(collection_name: str, filter_dict: dict) -> Optional[dict]:
+        if IS_MONGO_CONNECTED and db is not None:
+            try:
+                result = db[collection_name].find_one(filter_dict)
+                if result:
+                    return result
+            except Exception as e:
+                print(f"Mongo find_one warning: {e}")
+
+        # Fallback in-memory
+        coll = IN_MEMORY_COLLECTIONS.get(collection_name, {})
+        for d in coll.values():
+            match = True
+            for k, v in filter_dict.items():
+                if d.get(k) != v:
+                    match = False
+                    break
+            if match:
+                return d
+        return None
 
     @staticmethod
     def find_all(collection_name: str, filter_dict: Optional[dict] = None) -> List[dict]:

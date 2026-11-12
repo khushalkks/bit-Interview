@@ -14,9 +14,8 @@ class Settings:
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
-    # Supabase Configuration
-    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-    SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
+    # MongoDB Database URI
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
     
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
