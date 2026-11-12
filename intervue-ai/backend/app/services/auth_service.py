@@ -1,86 +1,71 @@
 import uuid
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 from app.schemas.user import UserRegister, UserResponse
 from app.core.security import hash_password, verify_password
-
-# In-memory user database store for initial phases
-USERS_DB: Dict[str, dict] = {}
+from app.db.mongodb import MongoDBManager
 
 # Default demo accounts
-DEMO_USER_ID = "usr_khushal_demo_01"
-USERS_DB[DEMO_USER_ID] = {
-    "id": DEMO_USER_ID,
-    "name": "Khushal Kumar",
-    "email": "khushal@example.com",
-    "password_hash": hash_password("password123"),
-    "target_role": "Full Stack Engineer",
-    "created_at": datetime.now().isoformat()
-}
-
-RECRUITER_USER_ID = "usr_recruiter_demo_02"
-USERS_DB[RECRUITER_USER_ID] = {
-    "id": RECRUITER_USER_ID,
-    "name": "Sarah Jenkins",
-    "email": "recruiter@example.com",
-    "password_hash": hash_password("password123"),
-    "target_role": "Technical Recruiter / HR",
-    "created_at": datetime.now().isoformat()
-}
+DEMO_USERS = [
+    {
+        "id": "usr_khushal_demo_01",
+        "name": "Khushal Kumar",
+        "email": "khushal@example.com",
+        "password_hash": hash_password("password123"),
+        "target_role": "Full Stack Engineer",
+        "created_at": datetime.now().isoformat()
+    },
+    {
+        "id": "usr_recruiter_demo_02",
+        "name": "Sarah Jenkins",
+        "email": "recruiter@example.com",
+        "password_hash": hash_password("password123"),
+        "target_role": "Technical Recruiter / HR",
+        "created_at": datetime.now().isoformat()
+    }
+]
 
 class AuthService:
+    @classmethod
+    def init_demo_users(cls):
+        """Seed demo users into MongoDB if not already present"""
+        try:
+            for demo_user in DEMO_USERS:
+                existing = cls.get_by_email(demo_user["email"])
+                if not existing:
+                    MongoDBManager.insert_document("users", demo_user["id"], demo_user)
+        except Exception as e:
+            print(f"Demo user initialization note: {e}")
+
     @staticmethod
-    def get_by_email(email: str) -> Optional[dict]:
+    def _normalize_user(user_doc: Optional[dict]) -> Optional[dict]:
+        if not user_doc:
+            return None
+        doc = dict(user_doc)
+        if "id" not in doc and "_id" in doc:
+            doc["id"] = str(doc["_id"])
+        return doc
+
+    @classmethod
+    def get_by_email(cls, email: str) -> Optional[dict]:
+        if not email:
+            return None
         email_clean = email.strip().lower()
-        for user in USERS_DB.values():
-            if user["email"].strip().lower() == email_clean:
-                return user
-        return None
+        user = MongoDBManager.find_one("users", {"email": email_clean})
+        return cls._normalize_user(user)
 
-    @staticmethod
-    def get_by_id(user_id: str) -> Optional[dict]:
-        return USERS_DB.get(user_id)
-
-    @staticmethod
-    def get_or_create_supabase_user(payload: dict) -> dict:
-        """Retrieve or auto-provision a user from a Supabase OAuth JWT token"""
-        user_id = str(payload.get("sub", ""))
+    @classmethod
+    def get_by_id(cls, user_id: str) -> Optional[dict]:
         if not user_id:
-            raise ValueError("Token missing user subject")
-        
-        user = USERS_DB.get(user_id)
-        if user:
-            return user
-        
-        email = payload.get("email") or f"{user_id[:8]}@oauth.user"
-        existing = AuthService.get_by_email(email)
-        if existing:
-            USERS_DB[user_id] = existing
-            return existing
+            return None
+        user = MongoDBManager.find_document("users", user_id)
+        if not user:
+            user = MongoDBManager.find_one("users", {"id": user_id})
+        return cls._normalize_user(user)
 
-        user_metadata = payload.get("user_metadata", {}) or {}
-        name = (
-            user_metadata.get("full_name") or 
-            user_metadata.get("name") or 
-            email.split("@")[0] or 
-            "Candidate"
-        )
-        target_role = user_metadata.get("target_role") or "Full Stack Engineer"
-        
-        new_user = {
-            "id": user_id,
-            "name": name,
-            "email": email.strip().lower(),
-            "password_hash": "oauth_managed",
-            "target_role": target_role,
-            "created_at": datetime.now().isoformat()
-        }
-        USERS_DB[user_id] = new_user
-        return new_user
-
-    @staticmethod
-    def register_user(data: UserRegister) -> dict:
-        existing = AuthService.get_by_email(data.email)
+    @classmethod
+    def register_user(cls, data: UserRegister) -> dict:
+        existing = cls.get_by_email(data.email)
         if existing:
             raise ValueError("Email already registered")
 
@@ -93,24 +78,53 @@ class AuthService:
             "target_role": data.target_role or "Full Stack Engineer",
             "created_at": datetime.now().isoformat()
         }
-        USERS_DB[user_id] = user_record
+        MongoDBManager.insert_document("users", user_id, user_record)
         return user_record
 
-    @staticmethod
-    def authenticate_user(email: str, password: str) -> Optional[dict]:
-        user = AuthService.get_by_email(email)
+    @classmethod
+    def authenticate_user(cls, email: str, password: str) -> Optional[dict]:
+        user = cls.get_by_email(email)
         if not user:
             return None
-        if not verify_password(password, user["password_hash"]):
+        if not verify_password(password, user.get("password_hash", "")):
             return None
+        return user
+
+    @classmethod
+    def get_or_create_oauth_user(
+        cls, 
+        provider: str, 
+        email: Optional[str] = None, 
+        name: Optional[str] = None, 
+        target_role: Optional[str] = None
+    ) -> dict:
+        provider_title = provider.capitalize()
+        clean_email = (email or f"{provider.lower()}.candidate@gmail.com").strip().lower()
+        clean_name = name or f"{provider_title} Candidate"
+        user_id = f"usr_{provider.lower()}_{clean_email.split('@')[0]}"
+
+        user = cls.get_by_email(clean_email)
+        if not user:
+            user = {
+                "id": user_id,
+                "name": clean_name,
+                "email": clean_email,
+                "password_hash": "oauth_managed",
+                "target_role": target_role or "Full Stack Engineer",
+                "created_at": datetime.now().isoformat()
+            }
+            MongoDBManager.insert_document("users", user_id, user)
         return user
 
     @staticmethod
     def to_user_response(user: dict) -> UserResponse:
         return UserResponse(
-            id=user["id"],
-            name=user["name"],
-            email=user["email"],
-            target_role=user["target_role"],
-            created_at=user["created_at"]
+            id=str(user.get("id") or user.get("_id", "")),
+            name=user.get("name", ""),
+            email=user.get("email", ""),
+            target_role=user.get("target_role", "Full Stack Engineer"),
+            created_at=user.get("created_at", datetime.now().isoformat())
         )
+
+# Initialize demo users on startup
+AuthService.init_demo_users()

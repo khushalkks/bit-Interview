@@ -2,7 +2,7 @@ from typing import List
 from datetime import datetime
 from app.schemas.recruiter import CandidateRankItem, RecruiterDashboardResponse
 from app.services.interview_service import SESSIONS_DB
-from app.services.auth_service import USERS_DB
+from app.services.auth_service import AuthService
 
 class RecruiterService:
     @staticmethod
@@ -18,7 +18,7 @@ class RecruiterService:
                 continue
 
             if u_id not in user_stats:
-                user = USERS_DB.get(u_id, {})
+                user = AuthService.get_by_id(u_id) or {}
                 user_stats[u_id] = {
                     "user_id": u_id,
                     "candidate_name": user.get("name", f"Candidate {u_id[:5]}"),
