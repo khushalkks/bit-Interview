@@ -239,6 +239,7 @@ export default function InterviewPage() {
       setCodeSnippet('');
     } catch (err) {
       console.error('Failed to submit answer:', err);
+      alert(err.message || 'Failed to submit response. Please verify backend connection.');
     } finally {
       setSubmitting(false);
     }
@@ -562,7 +563,13 @@ export default function InterviewPage() {
                   rows={2}
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder="Type your response here or click mic to dictate..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      handleSendAnswer(e);
+                    }
+                  }}
+                  placeholder="Type your response here (or Ctrl+Enter to submit, or use mic)..."
                   className="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-2xl p-3 pr-10 text-xs text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none font-sans"
                 />
                 {answerText && (
